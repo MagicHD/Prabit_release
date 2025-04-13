@@ -73,6 +73,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => StatisticsScreenModel());
+    _fetchStats();
   }
 
   @override
@@ -80,6 +81,70 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
     _model.dispose();
 
     super.dispose();
+  }
+
+
+  // Add this function inside _StatisticsScreenWidgetState
+  Future<void> _fetchStats() async {
+    _model.isLoading = true; // Use model's variable
+    setState(() {}); // Trigger UI update for loading indicator
+
+    try {
+      final user = _model._auth.currentUser; // [cite: 3] Access via model
+      if (user == null) throw Exception('User not authenticated.'); // [cite: 3, 7]
+
+      final userDoc = await _model._firestore.collection('users').doc(user.uid).get(); // [cite: 3, 8] Access via model
+
+      if (userDoc.exists) { // [cite: 3, 9]
+        final userData = userDoc.data()!; // [cite: 3, 9]
+
+        // Use setState to update model variables and trigger UI rebuild
+        setState(() {
+          _model.totalPostsAmount = (userData['total_posts_amount'] as int?) ?? 0; // [cite: 3, 9, 10]
+          _model.currentStreak = (userData['streak'] as int?) ?? 0; // [cite: 3, 10, 11]
+          _model.highestStreak = (userData['highestStreak'] as int?) ?? 0; // [cite: 3, 11]
+
+          // --- TODO: Fetch Group Check-ins ---
+          // Example: _model.groupCheckIns = (userData['group_checkins'] as int?) ?? 0;
+          // Adjust 'group_checkins' to your actual field name
+
+          // Fetch categories - Modify query based on _model.selectedTimePeriod if needed
+          // This example fetches all categories, filtering needs to be added [cite: 3, 12]
+        });
+
+        // Fetch category shares asynchronously after setting initial stats
+        final categorySharesCollection = _model._firestore // [cite: 3, 12] Access via model
+            .collection('users')
+            .doc(user.uid)
+            .collection('categoryShares');
+
+        // --- TODO: Add date filtering based on _model.selectedTimePeriod here ---
+        // Example: .where('timestamp', isGreaterThanOrEqualTo: startDate, isLessThan: endDate)
+
+        final querySnapshot = await categorySharesCollection.get(); // [cite: 3, 12]
+        final categories = querySnapshot.docs; // [cite: 3, 12]
+
+        final fetchedCategoryData = { // [cite: 3, 13]
+          for (var doc in categories)
+            doc.id: (doc.data()['count'] as int?) ?? 0, // [cite: 3, 13]
+        };
+
+        // Update category data and loading state
+        setState(() {
+          _model.categoryData = fetchedCategoryData; // [cite: 3, 13]
+          // If using fl_chart: _model.pieChartSections = _generatePieChartSections();
+          _model.isLoading = false; // [cite: 3, 17, 18]
+        });
+
+
+      } else { // [cite: 3, 15]
+        print('DEBUG: User document does not exist.'); // [cite: 3, 15]
+        setState(() => _model.isLoading = false); // [cite: 3, 18]
+      }
+    } catch (e) { // [cite: 3, 17]
+      print('DEBUG: Error fetching stats: $e'); // [cite: 3, 17]
+      setState(() => _model.isLoading = false); // [cite: 3, 17, 18]
+    }
   }
 
   @override
@@ -100,7 +165,9 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
             ),
             child: Padding(
               padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-              child: SingleChildScrollView(
+              child: _model.isLoading
+                  ? Center(child: CircularProgressIndicator()) // [cite: 3]
+                  : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
@@ -240,9 +307,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0.0, 8.0, 0.0, 0.0),
                                     child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        'ezjaph7o' /* 8 */,
-                                      ),
+                                      _model.currentStreak.toString(),
                                       style: FlutterFlowTheme.of(context)
                                           .displayMedium
                                           .override(
@@ -263,9 +328,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0.0, 4.0, 0.0, 0.0),
                                     child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        'it1vq0r1' /* days in a row */,
-                                      ),
+                                      _model.currentStreak.toString(),
                                       style: FlutterFlowTheme.of(context)
                                           .labelSmall
                                           .override(
@@ -321,9 +384,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
                                         padding: EdgeInsetsDirectional.fromSTEB(
                                             8.0, 0.0, 8.0, 0.0),
                                         child: Text(
-                                          FFLocalizations.of(context).getText(
-                                            'hplt8wwc' /* Longest Streak */,
-                                          ),
+                                          _model.highestStreak.toString(),
                                           style: FlutterFlowTheme.of(context)
                                               .labelMedium
                                               .override(
@@ -350,9 +411,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0.0, 8.0, 0.0, 0.0),
                                     child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        '43zpqv1x' /* 23 */,
-                                      ),
+                                      _model.totalPostsAmount.toString(),
                                       style: FlutterFlowTheme.of(context)
                                           .displayMedium
                                           .override(
@@ -373,9 +432,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
                                     padding: EdgeInsetsDirectional.fromSTEB(
                                         0.0, 4.0, 0.0, 0.0),
                                     child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        'titegc7k' /* days in a row */,
-                                      ),
+                                      _model.groupCheckIns.toString(),
                                       style: FlutterFlowTheme.of(context)
                                           .labelSmall
                                           .override(
