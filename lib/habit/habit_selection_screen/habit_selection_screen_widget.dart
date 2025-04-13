@@ -176,6 +176,48 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<Map<String, dynamic>> _habits = [];
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _myHabits = []; // 🔹 Personal habits
+  List<Map<String, dynamic>> _groupHabits = []; // 🔹 Group habits
+  bool _isMyHabitsTab = true; // 🔹 Track selected tab
+  bool _wasMyHabitsTab = true;
+  double _fabScale = 1.0;
+  late TabController _tabController;
+
+
+  void _fetchHabits() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        final snapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('habits')
+            .get();
+
+        List<Map<String, dynamic>> habits = snapshot.docs.map((doc) =>
+        {
+          'id': doc.id,
+          ...doc.data()
+        }).toList();
+
+        setState(() {
+          _myHabits = habits.where((h) => h['isGroupHabit'] != true)
+              .toList(); // ✅ Separate personal habits
+          _groupHabits = habits.where((h) => h['isGroupHabit'] == true)
+              .toList(); // ✅ Separate group habits
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching habits: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -186,7 +228,11 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
       length: 2,
       initialIndex: 0,
     )..addListener(() => safeSetState(() {}));
+
+    // Fetch habits when the screen is initialized
+    _fetchHabits();
   }
+
 
   @override
   void dispose() {
@@ -359,57 +405,6 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
                                                     .habitcard5,
                                           ),
                                         ),
-                                        wrapWithModel(
-                                          model: _model.habitcardModel2,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .habitcard1,
-                                          ),
-                                        ),
-                                        wrapWithModel(
-                                          model: _model.habitcardModel3,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .habitcard3,
-                                          ),
-                                        ),
-                                        wrapWithModel(
-                                          model: _model.habitcardModel4,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .habitcard4,
-                                            active: true,
-                                          ),
-                                        ),
-                                        wrapWithModel(
-                                          model: _model.habitcardModel5,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .textTab,
-                                          ),
-                                        ),
-                                        wrapWithModel(
-                                          model: _model.habitcardModel6,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .habitcard4,
-                                          ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -431,15 +426,7 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
                                     updateCallback: () => safeSetState(() {}),
                                     child: HabitcardWidget(),
                                   ),
-                                  wrapWithModel(
-                                    model: _model.habitcardModel8,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: HabitcardWidget(
-                                      habitcolor:
-                                          FlutterFlowTheme.of(context).tertiary,
-                                      active: false,
-                                    ),
-                                  ),
+
                                 ],
                               ),
                             ],

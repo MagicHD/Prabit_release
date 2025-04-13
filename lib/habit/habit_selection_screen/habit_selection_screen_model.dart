@@ -13,6 +13,14 @@ import 'package:provider/provider.dart';
 class HabitSelectionScreenModel
     extends FlutterFlowModel<HabitSelectionScreenWidget> {
   ///  State fields for stateful widgets in this page.
+  ///
+  ///
+  ///
+  ///
+  ///
+
+
+
 
   // State field(s) for TabBar widget.
   TabController? tabBarController;
@@ -60,4 +68,6 @@ class HabitSelectionScreenModel
     habitcardModel7.dispose();
     habitcardModel8.dispose();
   }
+
+
 }
