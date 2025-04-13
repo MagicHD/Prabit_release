@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -68,6 +71,8 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
   late StatisticsScreenModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  // Remove the leading underscores
+
 
   @override
   void initState() {
@@ -90,10 +95,10 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
     setState(() {}); // Trigger UI update for loading indicator
 
     try {
-      final user = _model._auth.currentUser; // [cite: 3] Access via model
+      final user = _model.auth.currentUser; // [cite: 3] Access via model
       if (user == null) throw Exception('User not authenticated.'); // [cite: 3, 7]
 
-      final userDoc = await _model._firestore.collection('users').doc(user.uid).get(); // [cite: 3, 8] Access via model
+      final userDoc = await _model.firestore.collection('users').doc(user.uid).get(); // [cite: 3, 8] Access via model
 
       if (userDoc.exists) { // [cite: 3, 9]
         final userData = userDoc.data()!; // [cite: 3, 9]
@@ -105,7 +110,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
           _model.highestStreak = (userData['highestStreak'] as int?) ?? 0; // [cite: 3, 11]
 
           // --- TODO: Fetch Group Check-ins ---
-          // Example: _model.groupCheckIns = (userData['group_checkins'] as int?) ?? 0;
+          _model.groupCheckIns = (userData['group_checkins'] as int?) ?? 0;
           // Adjust 'group_checkins' to your actual field name
 
           // Fetch categories - Modify query based on _model.selectedTimePeriod if needed
@@ -113,7 +118,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
         });
 
         // Fetch category shares asynchronously after setting initial stats
-        final categorySharesCollection = _model._firestore // [cite: 3, 12] Access via model
+        final categorySharesCollection = _model.firestore // [cite: 3, 12] Access via model
             .collection('users')
             .doc(user.uid)
             .collection('categoryShares');
@@ -131,7 +136,7 @@ class _StatisticsScreenWidgetState extends State<StatisticsScreenWidget> {
 
         // Update category data and loading state
         setState(() {
-          _model.categoryData = fetchedCategoryData; // [cite: 3, 13]
+          _model.categoryData = Map<String, int>.from(fetchedCategoryData); // [cite: 3, 13]
           // If using fl_chart: _model.pieChartSections = _generatePieChartSections();
           _model.isLoading = false; // [cite: 3, 17, 18]
         });

@@ -15,8 +15,8 @@ import 'package:provider/provider.dart';
 class StatisticsScreenModel extends FlutterFlowModel<StatisticsScreenWidget> {
 
 
-  final FirebaseAuth _auth = FirebaseAuth.instance; // [cite: 3]
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // [cite: 3]
+  final FirebaseAuth auth = FirebaseAuth.instance; // [cite: 3]
+  final FirebaseFirestore firestore = FirebaseFirestore.instance; // [cite: 3]
 
   // Variables to hold fetched data
   Map<String, int> categoryData = {}; // [cite: 3]
