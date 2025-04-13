@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
+import '../../profile/calender/calender_widget.dart';
 import '/main.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/lat_lng.dart';
@@ -68,9 +69,9 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                 ),
         ),
         FFRoute(
-          name: CalendarWidget.routeName,
-          path: CalendarWidget.routePath,
-          builder: (context, params) => CalendarWidget(),
+          name: CalenderWidget.routeName,
+          path: CalenderWidget.routePath,
+          builder: (context, params) => CalenderWidget(),
         ),
         FFRoute(
           name: StatistiscpageWidget.routeName,
