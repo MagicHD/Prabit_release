@@ -22,13 +22,13 @@ abstract class FlutterFlowTheme {
   static ThemeMode get themeMode {
     final darkMode = _prefs?.getBool(kThemeModeKey);
     return darkMode == null
-        ? ThemeMode.system
+        ? ThemeMode.dark
         : darkMode
             ? ThemeMode.dark
             : ThemeMode.light;
   }
 
-  static void saveThemeMode(ThemeMode mode) => mode == ThemeMode.system
+  static void saveThemeMode(ThemeMode mode) => mode == ThemeMode.dark
       ? _prefs?.remove(kThemeModeKey)
       : _prefs?.setBool(kThemeModeKey, mode == ThemeMode.dark);
 

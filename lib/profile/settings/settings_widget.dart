@@ -7,6 +7,7 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
 import 'settings_model.dart';
 export 'settings_model.dart';
 
@@ -65,6 +66,8 @@ class _SettingsWidgetState extends State<SettingsWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => SettingsModel());
+
+    _model.switchValue = true;
   }
 
   @override
@@ -89,13 +92,13 @@ class _SettingsWidgetState extends State<SettingsWidget> {
           automaticallyImplyLeading: false,
           leading: FlutterFlowIconButton(
             borderColor: Colors.transparent,
-            borderRadius: 20.0,
-            borderWidth: 1.0,
-            buttonSize: 40.0,
+            borderRadius: 20,
+            borderWidth: 1,
+            buttonSize: 40,
             icon: Icon(
               Icons.arrow_back_rounded,
               color: Colors.white,
-              size: 24.0,
+              size: 24,
             ),
             onPressed: () async {
               context.safePop();
@@ -106,21 +109,21 @@ class _SettingsWidgetState extends State<SettingsWidget> {
               'lk39x5at' /* Settings */,
             ),
             style: FlutterFlowTheme.of(context).headlineSmall.override(
-                  fontFamily: FlutterFlowTheme.of(context).headlineSmallFamily,
-                  color: Colors.white,
-                  letterSpacing: 0.0,
-                  useGoogleFonts: GoogleFonts.asMap().containsKey(
-                      FlutterFlowTheme.of(context).headlineSmallFamily),
-                ),
+              fontFamily: FlutterFlowTheme.of(context).headlineSmallFamily,
+              color: Colors.white,
+              letterSpacing: 0.0,
+              useGoogleFonts: GoogleFonts.asMap().containsKey(
+                  FlutterFlowTheme.of(context).headlineSmallFamily),
+            ),
           ),
           actions: [],
           centerTitle: false,
-          elevation: 0.0,
+          elevation: 0,
         ),
         body: SafeArea(
           top: true,
           child: Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(16.0, 16.0, 16.0, 16.0),
+            padding: EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.max,
@@ -135,15 +138,15 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           'cyi02yrp' /* SUPPORT */,
                         ),
                         style: FlutterFlowTheme.of(context).labelSmall.override(
-                              fontFamily:
-                                  FlutterFlowTheme.of(context).labelSmallFamily,
-                              color: Color(0xFF8D8D8D),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                  FlutterFlowTheme.of(context)
-                                      .labelSmallFamily),
-                            ),
+                          fontFamily:
+                          FlutterFlowTheme.of(context).labelSmallFamily,
+                          color: Color(0xFF8D8D8D),
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.w600,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context)
+                                  .labelSmallFamily),
+                        ),
                       ),
                       InkWell(
                         splashColor: Colors.transparent,
@@ -157,14 +160,14 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             color: FlutterFlowTheme.of(context).secondary,
-                            borderRadius: BorderRadius.circular(12.0),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: Color(0xFF3C3F43),
-                              width: 1.0,
+                              width: 1,
                             ),
                           ),
                           child: Padding(
-                            padding: EdgeInsets.all(16.0),
+                            padding: EdgeInsets.all(16),
                             child: Row(
                               mainAxisSize: MainAxisSize.max,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -173,19 +176,18 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
                                     Container(
-                                      width: 36.0,
-                                      height: 36.0,
+                                      width: 36,
+                                      height: 36,
                                       decoration: BoxDecoration(
                                         color: Color(0xFF2A2E33),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Align(
-                                        alignment:
-                                            AlignmentDirectional(0.0, 0.0),
+                                        alignment: AlignmentDirectional(0, 0),
                                         child: Icon(
                                           Icons.chat_bubble_outline_rounded,
                                           color: Color(0xFF3B82F6),
-                                          size: 20.0,
+                                          size: 20,
                                         ),
                                       ),
                                     ),
@@ -196,30 +198,30 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                       style: FlutterFlowTheme.of(context)
                                           .bodyMedium
                                           .override(
-                                            fontFamily:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMediumFamily,
-                                            color: Colors.white,
-                                            letterSpacing: 0.0,
-                                            useGoogleFonts: GoogleFonts.asMap()
-                                                .containsKey(
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMediumFamily),
-                                          ),
+                                        fontFamily:
+                                        FlutterFlowTheme.of(context)
+                                            .bodyMediumFamily,
+                                        color: Colors.white,
+                                        letterSpacing: 0.0,
+                                        useGoogleFonts: GoogleFonts.asMap()
+                                            .containsKey(
+                                            FlutterFlowTheme.of(context)
+                                                .bodyMediumFamily),
+                                      ),
                                     ),
-                                  ].divide(SizedBox(width: 12.0)),
+                                  ].divide(SizedBox(width: 12)),
                                 ),
                                 Icon(
                                   Icons.chevron_right_rounded,
                                   color: Color(0xFF8D8D8D),
-                                  size: 20.0,
+                                  size: 20,
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                    ].divide(SizedBox(height: 12.0)),
+                    ].divide(SizedBox(height: 12)),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.max,
@@ -230,55 +232,55 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           'qg4ucjhk' /* LEGAL */,
                         ),
                         style: FlutterFlowTheme.of(context).labelSmall.override(
-                              fontFamily:
-                                  FlutterFlowTheme.of(context).labelSmallFamily,
-                              color: Color(0xFF8D8D8D),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                  FlutterFlowTheme.of(context)
-                                      .labelSmallFamily),
-                            ),
+                          fontFamily:
+                          FlutterFlowTheme.of(context).labelSmallFamily,
+                          color: Color(0xFF8D8D8D),
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.w600,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context)
+                                  .labelSmallFamily),
+                        ),
                       ),
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(12.0),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: Color(0xFF3C3F43),
-                            width: 1.0,
+                            width: 1,
                           ),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(16),
                           child: Column(
                             mainAxisSize: MainAxisSize.max,
                             children: [
                               Padding(
-                                padding: EdgeInsets.all(16.0),
+                                padding: EdgeInsets.all(16),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.max,
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
                                       mainAxisSize: MainAxisSize.max,
                                       children: [
                                         Container(
-                                          width: 36.0,
-                                          height: 36.0,
+                                          width: 36,
+                                          height: 36,
                                           decoration: BoxDecoration(
                                             color: Color(0xFF2A2E33),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Align(
                                             alignment:
-                                                AlignmentDirectional(0.0, 0.0),
+                                            AlignmentDirectional(0, 0),
                                             child: Icon(
                                               Icons.menu_book_outlined,
                                               color: Color(0xFF3B82F6),
-                                              size: 20.0,
+                                              size: 20,
                                             ),
                                           ),
                                         ),
@@ -289,60 +291,60 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
-                                                fontFamily:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMediumFamily,
-                                                color: Colors.white,
-                                                letterSpacing: 0.0,
-                                                useGoogleFonts: GoogleFonts
-                                                        .asMap()
-                                                    .containsKey(
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .bodyMediumFamily),
-                                              ),
+                                            fontFamily:
+                                            FlutterFlowTheme.of(context)
+                                                .bodyMediumFamily,
+                                            color: Colors.white,
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts
+                                                .asMap()
+                                                .containsKey(
+                                                FlutterFlowTheme.of(
+                                                    context)
+                                                    .bodyMediumFamily),
+                                          ),
                                         ),
-                                      ].divide(SizedBox(width: 12.0)),
+                                      ].divide(SizedBox(width: 12)),
                                     ),
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       color: Color(0xFF8D8D8D),
-                                      size: 20.0,
+                                      size: 20,
                                     ),
                                   ],
                                 ),
                               ),
                               Divider(
-                                height: 1.0,
-                                thickness: 1.0,
-                                indent: 16.0,
-                                endIndent: 16.0,
+                                height: 1,
+                                thickness: 1,
+                                indent: 16,
+                                endIndent: 16,
                                 color: Color(0xFF3C3F43),
                               ),
                               Padding(
-                                padding: EdgeInsets.all(16.0),
+                                padding: EdgeInsets.all(16),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.max,
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
                                       mainAxisSize: MainAxisSize.max,
                                       children: [
                                         Container(
-                                          width: 36.0,
-                                          height: 36.0,
+                                          width: 36,
+                                          height: 36,
                                           decoration: BoxDecoration(
                                             color: Color(0xFF2A2E33),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Align(
                                             alignment:
-                                                AlignmentDirectional(0.0, 0.0),
+                                            AlignmentDirectional(0, 0),
                                             child: Icon(
                                               Icons.lock_outline_rounded,
                                               color: Color(0xFF9333EA),
-                                              size: 20.0,
+                                              size: 20,
                                             ),
                                           ),
                                         ),
@@ -353,25 +355,25 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                           style: FlutterFlowTheme.of(context)
                                               .bodyMedium
                                               .override(
-                                                fontFamily:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMediumFamily,
-                                                color: Colors.white,
-                                                letterSpacing: 0.0,
-                                                useGoogleFonts: GoogleFonts
-                                                        .asMap()
-                                                    .containsKey(
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .bodyMediumFamily),
-                                              ),
+                                            fontFamily:
+                                            FlutterFlowTheme.of(context)
+                                                .bodyMediumFamily,
+                                            color: Colors.white,
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts
+                                                .asMap()
+                                                .containsKey(
+                                                FlutterFlowTheme.of(
+                                                    context)
+                                                    .bodyMediumFamily),
+                                          ),
                                         ),
-                                      ].divide(SizedBox(width: 12.0)),
+                                      ].divide(SizedBox(width: 12)),
                                     ),
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       color: Color(0xFF8D8D8D),
-                                      size: 20.0,
+                                      size: 20,
                                     ),
                                   ],
                                 ),
@@ -380,7 +382,21 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           ),
                         ),
                       ),
-                    ].divide(SizedBox(height: 12.0)),
+                    ].divide(SizedBox(height: 12)),
+                  ),
+                  Switch.adaptive(
+                    value: _model.switchValue!,
+                    onChanged: (newValue) async {
+                      safeSetState(() => _model.switchValue = newValue!);
+                      if (newValue!) {
+                        setDarkModeSetting(context, ThemeMode.dark);
+                      }
+                    },
+                    activeColor: FlutterFlowTheme.of(context).primary,
+                    activeTrackColor: FlutterFlowTheme.of(context).primary,
+                    inactiveTrackColor: FlutterFlowTheme.of(context).alternate,
+                    inactiveThumbColor:
+                    FlutterFlowTheme.of(context).secondaryBackground,
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.max,
@@ -391,28 +407,28 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           '11if3nk1' /* ACCOUNT */,
                         ),
                         style: FlutterFlowTheme.of(context).labelSmall.override(
-                              fontFamily:
-                                  FlutterFlowTheme.of(context).labelSmallFamily,
-                              color: Color(0xFF8D8D8D),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                  FlutterFlowTheme.of(context)
-                                      .labelSmallFamily),
-                            ),
+                          fontFamily:
+                          FlutterFlowTheme.of(context).labelSmallFamily,
+                          color: Color(0xFF8D8D8D),
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.w600,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context)
+                                  .labelSmallFamily),
+                        ),
                       ),
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(12.0),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: Color(0xFF3C3F43),
-                            width: 1.0,
+                            width: 1,
                           ),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(16),
                           child: Row(
                             mainAxisSize: MainAxisSize.max,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -421,18 +437,18 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
                                   Container(
-                                    width: 36.0,
-                                    height: 36.0,
+                                    width: 36,
+                                    height: 36,
                                     decoration: BoxDecoration(
                                       color: Color(0xFF2A2E33),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Align(
-                                      alignment: AlignmentDirectional(0.0, 0.0),
+                                      alignment: AlignmentDirectional(0, 0),
                                       child: Icon(
                                         Icons.logout_rounded,
                                         color: Color(0xFFFF5963),
-                                        size: 20.0,
+                                        size: 20,
                                       ),
                                     ),
                                   ),
@@ -443,29 +459,29 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                     style: FlutterFlowTheme.of(context)
                                         .bodyMedium
                                         .override(
-                                          fontFamily:
-                                              FlutterFlowTheme.of(context)
-                                                  .bodyMediumFamily,
-                                          color: Color(0xFFFF5963),
-                                          letterSpacing: 0.0,
-                                          useGoogleFonts: GoogleFonts.asMap()
-                                              .containsKey(
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily),
-                                        ),
+                                      fontFamily:
+                                      FlutterFlowTheme.of(context)
+                                          .bodyMediumFamily,
+                                      color: Color(0xFFFF5963),
+                                      letterSpacing: 0.0,
+                                      useGoogleFonts: GoogleFonts.asMap()
+                                          .containsKey(
+                                          FlutterFlowTheme.of(context)
+                                              .bodyMediumFamily),
+                                    ),
                                   ),
-                                ].divide(SizedBox(width: 12.0)),
+                                ].divide(SizedBox(width: 12)),
                               ),
                               Icon(
                                 Icons.chevron_right_rounded,
                                 color: Color(0xFF8D8D8D),
-                                size: 20.0,
+                                size: 20,
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ].divide(SizedBox(height: 12.0)),
+                    ].divide(SizedBox(height: 12)),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.max,
@@ -476,19 +492,18 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                           'xhlmnyuv' /* CREDITS */,
                         ),
                         style: FlutterFlowTheme.of(context).labelSmall.override(
-                              fontFamily:
-                                  FlutterFlowTheme.of(context).labelSmallFamily,
-                              color: Color(0xFF8D8D8D),
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w600,
-                              useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                  FlutterFlowTheme.of(context)
-                                      .labelSmallFamily),
-                            ),
+                          fontFamily:
+                          FlutterFlowTheme.of(context).labelSmallFamily,
+                          color: Color(0xFF8D8D8D),
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.w600,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context)
+                                  .labelSmallFamily),
+                        ),
                       ),
                       Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(
-                            16.0, 0.0, 16.0, 0.0),
+                        padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
                         child: Column(
                           mainAxisSize: MainAxisSize.max,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,19 +515,19 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                               style: FlutterFlowTheme.of(context)
                                   .bodyMedium
                                   .override(
-                                    fontFamily: FlutterFlowTheme.of(context)
-                                        .bodyMediumFamily,
-                                    color: Colors.white,
-                                    letterSpacing: 0.0,
-                                    useGoogleFonts: GoogleFonts.asMap()
-                                        .containsKey(
-                                            FlutterFlowTheme.of(context)
-                                                .bodyMediumFamily),
-                                  ),
+                                fontFamily: FlutterFlowTheme.of(context)
+                                    .bodyMediumFamily,
+                                color: Colors.white,
+                                letterSpacing: 0.0,
+                                useGoogleFonts: GoogleFonts.asMap()
+                                    .containsKey(
+                                    FlutterFlowTheme.of(context)
+                                        .bodyMediumFamily),
+                              ),
                             ),
                             Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  0.0, 4.0, 0.0, 0.0),
+                              padding:
+                              EdgeInsetsDirectional.fromSTEB(0, 4, 0, 0),
                               child: Text(
                                 FFLocalizations.of(context).getText(
                                   '9swjw4fn' /* Prabit Team */,
@@ -520,23 +535,23 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                 style: FlutterFlowTheme.of(context)
                                     .labelMedium
                                     .override(
-                                      fontFamily: FlutterFlowTheme.of(context)
-                                          .labelMediumFamily,
-                                      color: Color(0xFF8D8D8D),
-                                      letterSpacing: 0.0,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey(
-                                              FlutterFlowTheme.of(context)
-                                                  .labelMediumFamily),
-                                    ),
+                                  fontFamily: FlutterFlowTheme.of(context)
+                                      .labelMediumFamily,
+                                  color: Color(0xFF8D8D8D),
+                                  letterSpacing: 0.0,
+                                  useGoogleFonts: GoogleFonts.asMap()
+                                      .containsKey(
+                                      FlutterFlowTheme.of(context)
+                                          .labelMediumFamily),
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ].divide(SizedBox(height: 8.0)),
+                    ].divide(SizedBox(height: 8)),
                   ),
-                ].divide(SizedBox(height: 24.0)),
+                ].divide(SizedBox(height: 24)),
               ),
             ),
           ),

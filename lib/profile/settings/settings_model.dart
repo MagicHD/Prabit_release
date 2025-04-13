@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 class SettingsModel extends FlutterFlowModel<SettingsWidget> {
   @override
   void initState(BuildContext context) {}
+  bool? switchValue;
 
   @override
   void dispose() {}
