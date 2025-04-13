@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "652015481574",
+    "project_id": "prabit-release",
+    "storage_bucket": "prabit-release.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652015481574:android:927851ed55221479144127",
+        "android_client_info": {
+          "package_name": "com.mycompany.prabitdesign"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCwq-d7Phv7Y-Lgz38hb0GlDLGI5p1pHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
