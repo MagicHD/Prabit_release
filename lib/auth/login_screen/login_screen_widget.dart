@@ -476,7 +476,7 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
                             'apzszk8t' /* Sign in with Google */,
                           ),
                           icon: Icon(
-                            Icons.google,
+                            Icons.abc_outlined,
                             size: 24.0,
                           ),
                           options: FFButtonOptions(

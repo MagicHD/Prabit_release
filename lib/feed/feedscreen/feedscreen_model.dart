@@ -27,7 +27,6 @@ class FeedscreenModel extends FlutterFlowModel<FeedscreenWidget> {
     feedcardModel1 = createModel(context, () => FeedcardModel());
     feedcardModel2 = createModel(context, () => FeedcardModel());
   }
-
   @override
   void dispose() {
     tabBarController?.dispose();

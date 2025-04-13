@@ -86,7 +86,7 @@ class _TabbarWidgetState extends State<TabbarWidget>
             },
           ),
         ),
-        Expanded(
+        /*Expanded(
           child: TabBarView(
             controller: _model.tabBarController,
             children: [
@@ -177,7 +177,7 @@ class _TabbarWidgetState extends State<TabbarWidget>
               ),
             ],
           ),
-        ),
+        ),*/
       ],
     );
   }
