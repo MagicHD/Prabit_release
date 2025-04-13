@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -136,7 +139,153 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                   size: 24.0,
                 ),
                 onPressed: () async {
-                  context.pushNamed(HabitSelectionScreenWidget.routeName);
+                  // --- START: Firebase Save Logic ---
+
+                  // 1. Get Data from Model
+                  final habitName = _model.textController.text.trim();
+                  final category = _model.selectedCategory;
+                  final iconData = _model.selectedIcon;
+                  final color = _model.selectedColor;
+                  final time = _model.selectedTime; // This is likely a DateTime? from the model
+
+                  // 2. Validation
+                  if (habitName.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please enter a habit name.',
+                          // Use theme colors for consistency
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return; // Stop if validation fails
+                  }
+                  if (category == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please select a category.',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+                  if (iconData == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please select an icon.',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+                  if (color == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please select a color.',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return;
+                  }
+                  // Add validation for other required fields if necessary (e.g., at least one day selected)
+
+
+                  // 3. Prepare Data for Firebase
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Error: User not logged in.',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                    return; // Make sure user is logged in
+                  }
+
+                  // Convert selected days map to a list of strings
+                  final List<String> daysList = _model.selectedDays.entries
+                      .where((entry) => entry.value) // Filter where the value is true
+                      .map((entry) => entry.key) // Get the key ('M', 'T', etc.)
+                      .toList();
+
+                  // Format time (if selected) - Storing as HH:mm string
+                  String? timeString;
+                  if (time != null) {
+                    // Ensure you have imported the 'intl' package for DateFormat
+                    // Usually done automatically by FlutterFlow or add: import 'package:intl/intl.dart';
+                    timeString = DateFormat('HH:mm').format(time); // Example: "08:00"
+                  }
+
+                  // Store color as a hex string (e.g., #FFD700)
+                  String colorString = '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+
+                  // Prepare the data map to be saved
+                  final habitData = {
+                    'name': habitName,
+                    'category': category, // String like 'Physical', 'Mental' etc.
+                    'days': daysList, // List ['M', 'W', 'F']
+                    // Store icon details reliably
+                    'iconCodePoint': iconData.codePoint,
+                    'iconFontFamily': iconData.fontFamily,
+                    // 'iconName': iconData.icon?.toString(), // Less reliable way
+                    'color': colorString, // Hex string like #FFD700
+                    'time': timeString, // HH:mm string or null
+                    'userId': user.uid, // Link habit to the user
+                    'createdAt': FieldValue.serverTimestamp(), // Track creation time
+                    // Add any other fields from your model you need to save
+                  };
+
+                  // 4. Save to Firestore
+                  try {
+                    // Assuming collection path: users/{userId}/habits/{habitId}
+                    // Using .add() automatically generates a unique document ID for the new habit
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .collection('habits')
+                        .add(habitData);
+
+                    // 5. Provide Success Feedback and Navigate Back
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Habit created successfully!',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).success,
+                      ),
+                    );
+                    // Navigate back after successful save
+                    context.safePop(); // Use safePop for robust navigation
+
+                  } catch (e) {
+                    print('Error saving habit: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Error saving habit: ${e.toString()}',
+                          style: TextStyle(color: FlutterFlowTheme.of(context).info),
+                        ),
+                        backgroundColor: FlutterFlowTheme.of(context).error,
+                      ),
+                    );
+                  }
+                  // --- END: Firebase Save Logic ---
                 },
               ),
             ),
@@ -252,77 +401,134 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                       mainAxisSize: MainAxisSize.max,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          FFLocalizations.of(context).getText(
-                            'hfbd6ief' /* Time (Optional) */,
-                          ),
-                          style: FlutterFlowTheme.of(context)
-                              .titleLarge
-                              .override(
-                                fontFamily: FlutterFlowTheme.of(context)
-                                    .titleLargeFamily,
-                                letterSpacing: 0.0,
-                                useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                    FlutterFlowTheme.of(context)
-                                        .titleLargeFamily),
-                              ),
-                        ),
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context).secondary,
-                            borderRadius: BorderRadius.circular(12.0),
-                            border: Border.all(
-                              color: FlutterFlowTheme.of(context)
-                                  .primaryBordercolor,
-                              width: 1.0,
+                        Padding( // Added padding for spacing consistency if needed
+                          padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0), // Matches divider spacing
+                          child: Text(
+                            FFLocalizations.of(context).getText(
+                              'hfbd6ief' /* Time (Optional) */,
+                            ),
+                            style: FlutterFlowTheme.of(context)
+                                .titleLarge
+                                .override(
+                              fontFamily: FlutterFlowTheme.of(context).titleLargeFamily,
+                              letterSpacing: 0.0,
+                              useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                  FlutterFlowTheme.of(context).titleLargeFamily),
                             ),
                           ),
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Icon(
-                                      Icons.access_time,
-                                      color: FlutterFlowTheme.of(context).info,
-                                      size: 24.0,
-                                    ),
-                                    Text(
-                                      FFLocalizations.of(context).getText(
-                                        'lch016c0' /* 08:00 AM */,
+                        ),
+                        // Wrap the Container with GestureDetector to make it tappable
+                        GestureDetector(
+                          onTap: () async {
+                            // Show Flutter's built-in time picker
+                            final TimeOfDay? picked = await showTimePicker(
+                              context: context,
+                              initialTime: _model.selectedTime != null
+                                  ? TimeOfDay.fromDateTime(_model.selectedTime!)
+                                  : TimeOfDay(hour: 8, minute: 0), // Default to 8:00 AM or current time
+                              // Optional: You can add builder for theming the picker itself
+                              // builder: (context, child) {
+                              //   return Theme(
+                              //     data: Theme.of(context).copyWith(
+                              //       // Customize picker colors here if needed
+                              //       colorScheme: Theme.of(context).colorScheme.copyWith(
+                              //         primary: FlutterFlowTheme.of(context).primary,
+                              //         onPrimary: FlutterFlowTheme.of(context).info,
+                              //       ),
+                              //     ),
+                              //     child: child!,
+                              //   );
+                              // },
+                            );
+
+                            // If the user picked a time, update the state
+                            if (picked != null) {
+                              final now = DateTime.now();
+                              setState(() {
+                                // Update the model's selectedTime state variable
+                                _model.selectedTime = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                  picked.hour,
+                                  picked.minute,
+                                );
+                              });
+                            }
+                            // If you enabled 'Allow Clear' in a FlutterFlow action,
+                            // you might get a null result here, signifying clear.
+                            // Handle clearing the _model.selectedTime if necessary:
+                            // else {
+                            //   setState(() {
+                            //     _model.selectedTime = null;
+                            //   });
+                            // }
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              // Styling from your original code to match app design
+                              color: FlutterFlowTheme.of(context).secondary,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: FlutterFlowTheme.of(context).primaryBordercolor,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0), // Consistent padding
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        color: FlutterFlowTheme.of(context).info, // Use theme color
+                                        size: 24.0,
                                       ),
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .override(
-                                            fontFamily:
-                                                FlutterFlowTheme.of(context)
-                                                    .bodyMediumFamily,
-                                            color: FlutterFlowTheme.of(context)
-                                                .info,
+                                      Padding( // Added padding for spacing
+                                        padding: EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 0.0),
+                                        child: Text(
+                                          _model.selectedTime != null
+                                          // Format the DateTime using intl package (e.g., 8:00 AM)
+                                              ? DateFormat.jm().format(_model.selectedTime!)
+                                          // Use a clear placeholder text
+                                              : 'Select Time',
+                                          style: FlutterFlowTheme.of(context)
+                                              .bodyMedium
+                                              .override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            color: FlutterFlowTheme.of(context).info, // Use theme color
                                             letterSpacing: 0.0,
                                             useGoogleFonts: GoogleFonts.asMap()
-                                                .containsKey(
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMediumFamily),
+                                                .containsKey(FlutterFlowTheme.of(context).bodyMediumFamily),
                                           ),
-                                    ),
-                                  ].divide(SizedBox(width: 12.0)),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: Colors.white,
-                                  size: 24.0,
-                                ),
-                              ],
+                                        ),
+                                      ),
+                                    ],
+                                    // Note: .divide extension method might not be standard Flutter/Dart.
+                                    // If it causes issues, replace it with Padding/SizedBox widgets.
+                                    // Example replacement: Adding Padding around Text above.
+                                  ),
+                                  Icon(
+                                    // Icon indicating tappability
+                                    Icons.edit_calendar_outlined,
+                                    color: FlutterFlowTheme.of(context).info, // Use theme color
+                                    size: 24.0,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ].divide(SizedBox(height: 8.0)),
+                      ],
+                      // Note: .divide extension method might not be standard Flutter/Dart.
+                      // If this wrapping Column uses .divide and it causes issues,
+                      // replace it with Padding on the Text and GestureDetector/Container widgets.
+                      // Example replacement: Added Padding to the Title Text above.
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.max,
@@ -347,17 +553,32 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['M'] = !_model.selectedDays['M']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
+                              Container(
+
                               width: 40.0,
                               height: 40.0,
+
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
+                                color: _model.selectedDays['M']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: FlutterFlowTheme.of(context)
                                       .primaryBordercolor,
                                   width: 1.0,
                                 ),
+
                               ),
                               child: Align(
                                 alignment: AlignmentDirectional(0.0, 0.0),
@@ -384,12 +605,24 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['T'] = !_model.selectedDays['T']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
+                                color: _model.selectedDays['T']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: FlutterFlowTheme.of(context)
@@ -422,13 +655,25 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['W'] = !_model.selectedDays['W']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .buttonBackground,
+                                color: _model.selectedDays['W']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
+
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   width: 1.0,
@@ -459,12 +704,24 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['Th'] = !_model.selectedDays['Th']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
+                                color: _model.selectedDays['Th']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: FlutterFlowTheme.of(context)
@@ -497,13 +754,24 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['F'] = !_model.selectedDays['F']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context)
-                                    .buttonBackground,
+                                color: _model.selectedDays['F']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   width: 1.0,
@@ -534,12 +802,24 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['Sa'] = !_model.selectedDays['Sa']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
+                                color: _model.selectedDays['Sa']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: FlutterFlowTheme.of(context)
@@ -572,12 +852,24 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedDays['Su'] = !_model.selectedDays['Su']!;
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child:
                             Container(
                               width: 40.0,
                               height: 40.0,
                               decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
+                                color: _model.selectedDays['Su']! // Checks the updated state
+                                    ? FlutterFlowTheme.of(context).buttonBackground // Color IF true (selected)
+                                    : FlutterFlowTheme.of(context).secondary,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: FlutterFlowTheme.of(context)
@@ -610,7 +902,7 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),),
                           ],
                         ),
                       ].divide(SizedBox(height: 16.0)),
@@ -638,74 +930,190 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFFFFD700);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
                               width: 32.0,
                               height: 32.0,
                               decoration: BoxDecoration(
                                 color: Color(0xFFFFD700),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: FlutterFlowTheme.of(context).info,
+                                  color: _model.selectedColor == Color(0xFFFFD700)
+                                      ? FlutterFlowTheme.of(context).info // Selected indicator
+                                      : Colors.transparent, // No border if not selected
                                   width: 2.0,
                                 ),
                               ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFFFF8C00),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFFFF4500),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFFFF1493),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF9370DB),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF4169E1),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF00BFFF),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF32CD32),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                            ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFFFF8C00);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFFF8C00),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFFFF8C00)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFFFF4500);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFFF4500),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFFFF4500)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFFFF1493);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFFF1493),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFFFF1493)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFF9370DB);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF9370DB),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFF9370DB)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFF4169E1);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF4169E1),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFF4169E1)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFF00BFFF);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF00BFFF),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFF00BFFF)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
+                            GestureDetector(
+                              onTap: () async {
+                                // This is where the onTap action goes
+                                setState(() {
+                                  // Use the correct key for Monday as defined in your model ('M' in the previous example)
+                                  _model.selectedColor = Color(0xFF32CD32);
+                                });
+                                // You could add other actions here if needed after the state updates
+                              },
+                              child: Container(
+                                width: 32.0,
+                                height: 32.0,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF32CD32),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _model.selectedColor == Color(0xFF32CD32)
+                                        ? FlutterFlowTheme.of(context).info // Selected indicator
+                                        : Colors.transparent, // No border if not selected
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),),
                           ],
                         ),
                       ].divide(SizedBox(height: 16.0)),
@@ -839,446 +1247,542 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                           shrinkWrap: true,
                           scrollDirection: Axis.vertical,
                           children: [
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Physical'; // <<< Set category to 'Physical'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Physical' // <<< Check for 'Physical'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Physical' // <<< Check for 'Physical'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Physical' // <<< Check for 'Physical'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.sports_tennis, // Icon for Physical
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Physical' // <<< Check for 'Physical'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
+                                        ),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            'ww1rw39y' /* Physical */, // Text for Physical
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Physical' // <<< Check for 'Physical'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.sports_tennis,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          'ww1rw39y' /* Physical */,
+                              ),
+                            )
+                            // Wrap the Material widget with GestureDetector
+                            ,GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Mental';
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Mental' // Check if this category is selected
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Mental'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Mental'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.psychology_outlined,
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Mental'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            'ieiic0ns' /* Mental */,
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Mental'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Learning'; // <<< Set category to 'Learning'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.psychology_outlined,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          'ieiic0ns' /* Mental */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Learning' // <<< Check for 'Learning'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Learning' // <<< Check for 'Learning'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Learning' // <<< Check for 'Learning'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.school_outlined, // Icon for Learning
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Learning' // <<< Check for 'Learning'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            'ec4ugesd' /* Learning */, // Text for Learning
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Learning' // <<< Check for 'Learning'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Social'; // <<< Set category to 'Social'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.school_outlined,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          'ec4ugesd' /* Learning */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Social' // <<< Check for 'Social'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Social' // <<< Check for 'Social'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Social' // <<< Check for 'Social'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.mail_outline_rounded, // Icon for Social
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Social' // <<< Check for 'Social'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            '98fmkouc' /* Social */, // Text for Social
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Social' // <<< Check for 'Social'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Health'; // <<< Set category to 'Health'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.mail_outline_rounded,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          '98fmkouc' /* Social */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Health' // <<< Check for 'Health'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Health' // <<< Check for 'Health'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Health' // <<< Check for 'Health'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        FaIcon( // Using FaIcon for FontAwesome heart
+                                          FontAwesomeIcons.heart, // Icon for Health
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Health' // <<< Check for 'Health'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            '67xdqhyf' /* Health */, // Text for Health
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Health' // <<< Check for 'Health'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Creativity'; // <<< Set category to 'Creativity'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      FaIcon(
-                                        FontAwesomeIcons.heart,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          '67xdqhyf' /* Health */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Creativity' // <<< Check for 'Creativity'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Creativity' // <<< Check for 'Creativity'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Creativity' // <<< Check for 'Creativity'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.music_note_outlined, // Icon for Creativity
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Creativity' // <<< Check for 'Creativity'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            '59caj3e5' /* Creativity */, // Text for Creativity
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Creativity' // <<< Check for 'Creativity'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Productivity'; // <<< Set category to 'Productivity'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.music_note_outlined,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          '59caj3e5' /* Creativity */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Productivity' // <<< Check for 'Productivity'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Productivity' // <<< Check for 'Productivity'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Productivity' // <<< Check for 'Productivity'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.task_alt, // Icon for Productivity
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Productivity' // <<< Check for 'Productivity'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            'p6ycnc8w' /* Productivity */, // Text for Productivity
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Productivity' // <<< Check for 'Productivity'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
+                                        ),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
+                            // Wrap the Material widget with GestureDetector
+                            GestureDetector(
+                              onTap: () async {
+                                // Action to perform when tapped
+                                setState(() {
+                                  // Update the selectedCategory state in your model
+                                  // Use the specific category name for this button
+                                  _model.selectedCategory = 'Mindfulness'; // <<< Set category to 'Mindfulness'
+                                });
+                              },
+                              child: Material( // The original Material widget is now the child
+                                color: Colors.transparent,
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
                                 ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.task_alt,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          'p6ycnc8w' /* Productivity */,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    // Update color/border based on selection
+                                    color: _model.selectedCategory == 'Mindfulness' // <<< Check for 'Mindfulness'
+                                        ? FlutterFlowTheme.of(context).buttonBackground // Example: Color when selected
+                                        : FlutterFlowTheme.of(context).secondary, // Default color
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: _model.selectedCategory == 'Mindfulness' // <<< Check for 'Mindfulness'
+                                          ? FlutterFlowTheme.of(context).primaryText // Example: Border color when selected
+                                          : FlutterFlowTheme.of(context).primaryBordercolor, // Default border color
+                                      width: _model.selectedCategory == 'Mindfulness' // <<< Check for 'Mindfulness'
+                                          ? 2.0 // Example: Thicker border when selected
+                                          : 1.0, // Default border width
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          Icons.cloud_outlined, // Icon for Mindfulness
+                                          // Optionally change icon color based on selection
+                                          color: _model.selectedCategory == 'Mindfulness' // <<< Check for 'Mindfulness'
+                                              ? FlutterFlowTheme.of(context).secondary // Example: Icon color when selected
+                                              : FlutterFlowTheme.of(context).primaryText, // Default icon color
+                                          size: 20.0,
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Material(
-                              color: Colors.transparent,
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context).secondary,
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: FlutterFlowTheme.of(context)
-                                        .primaryBordercolor,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.cloud_outlined,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      Text(
-                                        FFLocalizations.of(context).getText(
-                                          'b5qt6f6w' /* Mindfulness */,
+                                        Text(
+                                          FFLocalizations.of(context).getText(
+                                            'b5qt6f6w' /* Mindfulness */, // Text for Mindfulness
+                                          ),
+                                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+                                            // Optionally change text color based on selection
+                                            color: _model.selectedCategory == 'Mindfulness' // <<< Check for 'Mindfulness'
+                                                ? FlutterFlowTheme.of(context).secondary // Example: Text color when selected
+                                                : FlutterFlowTheme.of(context).info, // Default text color
+                                            letterSpacing: 0.0,
+                                            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                                FlutterFlowTheme.of(context).bodyMediumFamily),
+                                          ),
                                         ),
-                                        style: FlutterFlowTheme.of(context)
-                                            .bodyMedium
-                                            .override(
-                                              fontFamily:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMediumFamily,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              letterSpacing: 0.0,
-                                              useGoogleFonts: GoogleFonts
-                                                      .asMap()
-                                                  .containsKey(
-                                                      FlutterFlowTheme.of(
-                                                              context)
-                                                          .bodyMediumFamily),
-                                            ),
-                                      ),
-                                    ].divide(SizedBox(width: 8.0)),
+                                      ].divide(SizedBox(width: 8.0)), // Assuming .divide is an extension method you have
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            )
                           ],
                         ),
                         Text(

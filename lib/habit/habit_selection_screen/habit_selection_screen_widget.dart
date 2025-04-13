@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -218,6 +221,22 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
     }
   }
 
+
+  Color _getHabitColor(int index) {
+    List<Color> colors = [
+      FlutterFlowTheme.of(context).habitcard1, // Assuming you defined these in Theme
+      FlutterFlowTheme.of(context).habitcard2,
+      FlutterFlowTheme.of(context).habitcard3,
+      FlutterFlowTheme.of(context).habitcard4,
+      FlutterFlowTheme.of(context).habitcard5,
+
+      // Add more colors if needed
+    ];
+    // Or use colors defined in habit_selectionScreen.txt [cite: 98]
+    // List<Color> colors = [ Color(0xFFFFB200), Color(0xFFBE4B02), ... ];
+    return colors[index % colors.length];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -376,59 +395,11 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
                           child: TabBarView(
                             controller: _model.tabBarController,
                             children: [
-                              Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        4.0, 24.0, 4.0, 0.0),
-                                    child: GridView(
-                                      padding: EdgeInsets.zero,
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        crossAxisSpacing: 15.0,
-                                        mainAxisSpacing: 15.0,
-                                        childAspectRatio: 0.9,
-                                      ),
-                                      primary: false,
-                                      shrinkWrap: true,
-                                      scrollDirection: Axis.vertical,
-                                      children: [
-                                        wrapWithModel(
-                                          model: _model.habitcardModel1,
-                                          updateCallback: () =>
-                                              safeSetState(() {}),
-                                          child: HabitcardWidget(
-                                            habitcolor:
-                                                FlutterFlowTheme.of(context)
-                                                    .habitcard5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              GridView(
-                                padding: EdgeInsets.zero,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 15.0,
-                                  mainAxisSpacing: 10.0,
-                                  childAspectRatio: 1.0,
-                                ),
-                                scrollDirection: Axis.vertical,
-                                children: [
-                                  wrapWithModel(
-                                    model: _model.habitcardModel7,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: HabitcardWidget(),
-                                  ),
+                              // Tab 1: Personal Habits
+                              _buildHabitsGrid(_myHabits),
 
-                                ],
-                              ),
+                              // Tab 2: Group Habits
+                              _buildHabitsGrid(_groupHabits),
                             ],
                           ),
                         ),
@@ -443,4 +414,73 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
       ),
     );
   }
+
+
+  Widget _buildHabitsGrid(List<Map<String, dynamic>> habits) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (habits.isEmpty) {
+      // You can use the NoHabitsPlaceholder from habit_selectionScreen.txt [cite: 118]
+      // or a simple Text widget
+      return Center(
+        child: Text(
+          'No habits yet. Tap "+" to add one!',
+          style: FlutterFlowTheme.of(context).bodyMedium.override(
+            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
+            color: FlutterFlowTheme.of(context).secondaryText,
+            letterSpacing: 0.0,
+            useGoogleFonts: GoogleFonts.asMap().containsKey(
+                FlutterFlowTheme.of(context).bodyMediumFamily),
+          ),
+        ),
+      );
+    }
+
+    // Use GridView.builder
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(4.0, 24.0, 4.0, 0.0), // Adjust padding as needed
+      child: GridView.builder(
+        padding: EdgeInsets.zero,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 15.0,
+          mainAxisSpacing: 15.0,
+          childAspectRatio: 0.9, // Adjust as needed based on HabitcardWidget size
+        ),
+        primary: false,
+        shrinkWrap: true, // Important inside Column/TabBarView
+        scrollDirection: Axis.vertical,
+        itemCount: habits.length, // Dynamic count
+        itemBuilder: (context, index) {
+          final habit = habits[index];
+
+          // Safely get data with defaults
+          final String name = habit['name'] ?? 'Unnamed Habit';
+          final String time = habit['time'] ?? '--:--';
+          final List<dynamic> days = habit['days'] ?? [];
+          final int iconCode = habit['icon'] ?? Icons.question_mark.codePoint; // Default icon code
+          final String iconFontFamily = habit['iconFontFamily'] ?? 'MaterialIcons'; // Default family
+          final Color color = _getHabitColor(index); // Get color based on index or from habit data if available
+
+          // Create the HabitcardWidget dynamically
+          // NOTE: You might not need wrapWithModel if the HabitcardWidget state is simple
+          //       and managed internally or passed via constructor. FlutterFlow often adds
+          //       wrapWithModel automatically. If you manually edit the code, you might
+          //       need to adjust or remove the corresponding model entries in
+          //       habit_selection_screen_model.dart
+          return HabitcardWidget(
+            habitName: name,
+            habitTime: time,
+            selectedDays: days,
+            habitIconCode: iconCode,
+            habitIconFontFamily: iconFontFamily,
+            habitColor: color,
+          );
+        },
+      ),
+    );
+  }
+
 }

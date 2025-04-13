@@ -28,45 +28,16 @@ class HabitSelectionScreenModel
       tabBarController != null ? tabBarController!.index : 0;
 
   // Model for Habitcard component.
-  late HabitcardModel habitcardModel1;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel2;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel3;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel4;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel5;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel6;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel7;
-  // Model for Habitcard component.
-  late HabitcardModel habitcardModel8;
+
 
   @override
   void initState(BuildContext context) {
-    habitcardModel1 = createModel(context, () => HabitcardModel());
-    habitcardModel2 = createModel(context, () => HabitcardModel());
-    habitcardModel3 = createModel(context, () => HabitcardModel());
-    habitcardModel4 = createModel(context, () => HabitcardModel());
-    habitcardModel5 = createModel(context, () => HabitcardModel());
-    habitcardModel6 = createModel(context, () => HabitcardModel());
-    habitcardModel7 = createModel(context, () => HabitcardModel());
-    habitcardModel8 = createModel(context, () => HabitcardModel());
+
   }
 
   @override
   void dispose() {
     tabBarController?.dispose();
-    habitcardModel1.dispose();
-    habitcardModel2.dispose();
-    habitcardModel3.dispose();
-    habitcardModel4.dispose();
-    habitcardModel5.dispose();
-    habitcardModel6.dispose();
-    habitcardModel7.dispose();
-    habitcardModel8.dispose();
   }
 
 
