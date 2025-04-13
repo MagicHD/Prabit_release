@@ -649,99 +649,111 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Dismiss keyboard if tapped outside text field
-        if (_commentFocusNode.hasFocus) {
-          _commentFocusNode.unfocus();
-          setState(() { _replyingToPostId = null; }); // Clear replying state on dismiss
-        } else {
-          FocusScope.of(context).unfocus();
-        }
-        // Keep original FlutterFlow unfocus logic if needed
-        // FocusScope.of(context).unfocus();
-        // FocusManager.instance.primaryFocus?.unfocus();
+        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primary, // Use primary background
-        appBar: AppBar( // Keep original AppBar
-          backgroundColor: FlutterFlowTheme.of(context).primary,
-          automaticallyImplyLeading: false,
-          title: Text(
-            'Feed',
-            style: FlutterFlowTheme.of(context).displayMedium.override(
-              fontFamily: 'Inter Tight',
-              color: FlutterFlowTheme.of(context).primaryText,
-              letterSpacing: 0.0,
-            ),
-          ),
-          actions: [
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
-              child: Container(
-                width: 40.0,
-                height: 40.0,
-                clipBehavior: Clip.antiAlias, // Added clipBehavior
-                decoration: BoxDecoration(
-                  // image: DecorationImage( // Commented out static image
-                  //   fit: BoxFit.cover,
-                  //   image: Image.network(
-                  //     '500x500?person',
-                  //   ).image,
-                  // ),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: FlutterFlowTheme.of(context).buttonBackground, // Use button color for border
-                    width: 2.0,
-                  ),
-                  color: FlutterFlowTheme.of(context).secondary, // Background color
+        backgroundColor: FlutterFlowTheme.of(context).primary,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(30),
+          child: AppBar(
+            backgroundColor: FlutterFlowTheme.of(context).primary,
+            automaticallyImplyLeading: false,
+            actions: [],
+            flexibleSpace: FlexibleSpaceBar(
+              title: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 5),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
+                      child: Text(
+                        FFLocalizations.of(context).getText(
+                          'j2028ukr' /* Prabit */,
+                        ),
+                        style:
+                        FlutterFlowTheme.of(context).displaySmall.override(
+                          fontFamily: FlutterFlowTheme.of(context)
+                              .displaySmallFamily,
+                          letterSpacing: 0.0,
+                          useGoogleFonts: GoogleFonts.asMap()
+                              .containsKey(FlutterFlowTheme.of(context)
+                              .displaySmallFamily),
+                        ),
+                      ),
+                    ),
+                    FaIcon(
+                      FontAwesomeIcons.solidBell,
+                      color: FlutterFlowTheme.of(context).primaryText,
+                      size: 24,
+                    ),
+                  ].divide(SizedBox(width: 230)),
                 ),
-                // Display current user's profile picture or fallback
-                child: _currentUserProfilePic != null && _currentUserProfilePic!.isNotEmpty
-                    ? CircleAvatar(backgroundImage: NetworkImage(_currentUserProfilePic!), radius: 20)
-                    : Icon(Icons.person, color: Colors.white, size: 20),
               ),
+              centerTitle: false,
+              expandedTitleScale: 1.0,
             ),
-          ],
-          centerTitle: false,
-          elevation: 0.0,
+            elevation: 4,
+          ),
         ),
         body: SafeArea(
           top: true,
           child: Container(
             width: double.infinity,
-            height: double.infinity, // Allow container to take full height
+            height: double.infinity,
             decoration: BoxDecoration(
               color: FlutterFlowTheme.of(context).primary,
             ),
-            child: Column( // Use Column for TabBar and TabBarView
+            child: Column(
               children: [
-                // --- TabBar ---
                 Align(
-                  alignment: Alignment(0.0, 0),
+                  alignment: Alignment(0, 0),
                   child: TabBar(
                     labelColor: FlutterFlowTheme.of(context).primaryText,
-                    unselectedLabelColor: FlutterFlowTheme.of(context).secondaryText,
-                    labelStyle: FlutterFlowTheme.of(context).titleMedium.override(
-                        fontFamily: 'Inter Tight',
-                        letterSpacing: 0.0,
-                        fontWeight: FontWeight.bold // Make selected label bold
-                    ),
-                    unselectedLabelStyle: FlutterFlowTheme.of(context).titleMedium.override(
-                      fontFamily: 'Inter Tight',
+                    unselectedLabelColor:
+                    FlutterFlowTheme.of(context).secondaryText,
+                    labelStyle: FlutterFlowTheme.of(context)
+                        .titleLarge
+                        .override(
+                      fontFamily:
+                      FlutterFlowTheme.of(context).titleLargeFamily,
                       letterSpacing: 0.0,
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(
+                          FlutterFlowTheme.of(context).titleLargeFamily),
                     ),
-                    indicatorColor: FlutterFlowTheme.of(context).buttonBackground,
-                    indicatorWeight: 3.0, // Slightly thinner indicator
-                    indicatorSize: TabBarIndicatorSize.label, // Indicator matches label width
+                    unselectedLabelStyle: FlutterFlowTheme.of(context)
+                        .titleMedium
+                        .override(
+                      fontFamily:
+                      FlutterFlowTheme.of(context).titleMediumFamily,
+                      letterSpacing: 0.0,
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(
+                          FlutterFlowTheme.of(context).titleMediumFamily),
+                    ),
+                    indicatorColor:
+                    FlutterFlowTheme.of(context).buttonBackground,
+                    indicatorWeight: 3.5,
                     tabs: [
-                      Tab(text: 'Friends'),
-                      Tab(text: 'Friends of Friends'),
+                      Tab(
+                        text: FFLocalizations.of(context).getText(
+                          '40uc9yol' /* Friends */,
+                        ),
+                      ),
+                      Tab(
+                        text: FFLocalizations.of(context).getText(
+                          '9sgbuu77' /* Discover */,
+                        ),
+                      ),
                     ],
                     controller: _model.tabBarController,
-                    // Remove onTap if not needed, controller handles index change
+                    onTap: (i) async {
+                      [() async {}, () async {}][i]();
+                    },
                   ),
                 ),
-                // --- TabBarView ---
                 Expanded(
                   child: TabBarView(
                     controller: _model.tabBarController,

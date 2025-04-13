@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../auth_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -58,7 +61,8 @@ class LoginScreenWidget extends StatefulWidget {
 
 class _LoginScreenWidgetState extends State<LoginScreenWidget> {
   late LoginScreenModel _model;
-
+  final AuthService _authService = AuthService(); // Instantiate AuthService
+  bool _isLoading = false; // Add loading state variable
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -79,6 +83,60 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
 
     super.dispose();
   }
+
+
+  // --- Add Login Methods ---
+  Future<void> _signInWithEmail() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final email = _model.textController1.text.trim();
+    final password = _model.textController2.text.trim();
+
+    // Basic validation
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both email and password.')),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    User? user = await _authService.login(email, password ,context); // Pass context
+    if (user != null) {
+      // Navigate to the main screen (e.g., Feedscreen) on successful login
+      // Use goNamed to clear navigation stack potentially
+      context.goNamed(FeedscreenWidget.routeName);
+      // Or use pushReplacementNamed if you don't use go_router extensively for this
+      // Navigator.pushReplacementNamed(context, FeedscreenWidget.routeName);
+    }
+    // Error handling is now inside AuthService, showing Snackbars
+
+    if (mounted) { // Check if the widget is still in the tree
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    User? user = await _authService.signInWithGoogle(context);
+
+    if (user != null) {
+      // Navigate to the main screen
+      context.goNamed(FeedscreenWidget.routeName);
+      // Navigator.pushReplacementNamed(context, FeedscreenWidget.routeName);
+    }
+    // Error handling is inside AuthService
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+  // --- End Add Login Methods ---
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -394,11 +452,10 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
                                 ),
                               ].divide(SizedBox(height: 8.0)),
                             ),
+                            // --- UPDATE Sign in Button ---
                             FFButtonWidget(
-                              onPressed: () {
-                                print('Button pressed ...');
-                              },
-                              text: FFLocalizations.of(context).getText(
+                              onPressed: _signInWithEmail, // Call the email sign-in method
+                              text: _isLoading ? 'Signing In...' : FFLocalizations.of(context).getText( // Show loading text
                                 '5ugn2egv' /* Sign in */,
                               ),
                               options: FFButtonOptions(
@@ -412,22 +469,25 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
                                 textStyle: FlutterFlowTheme.of(context)
                                     .titleSmall
                                     .override(
-                                      fontFamily: FlutterFlowTheme.of(context)
-                                          .titleSmallFamily,
-                                      color: Colors.white,
-                                      letterSpacing: 0.0,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey(
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmallFamily),
-                                    ),
+                                  fontFamily: FlutterFlowTheme.of(context)
+                                      .titleSmallFamily,
+                                  color: Colors.white,
+                                  letterSpacing: 0.0,
+                                  useGoogleFonts: GoogleFonts.asMap()
+                                      .containsKey(
+                                      FlutterFlowTheme.of(context)
+                                          .titleSmallFamily),
+                                ),
                                 elevation: 0.0,
                                 borderSide: BorderSide(
                                   color: Colors.transparent,
                                   width: 1.0,
                                 ),
                                 borderRadius: BorderRadius.circular(8.0),
+                                disabledColor: Colors.grey, // Optional: visual feedback when loading
+                                disabledTextColor: Colors.white70, // Optional
                               ),
+                              showLoadingIndicator: _isLoading, // Show indicator on button
                             ),
                           ].divide(SizedBox(height: 16.0)),
                         ),
@@ -468,15 +528,14 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
                             ),
                           ].divide(SizedBox(width: 16.0)),
                         ),
+                        // --- UPDATE Google Sign-In Button ---
                         FFButtonWidget(
-                          onPressed: () {
-                            print('Button pressed ...');
-                          },
+                          onPressed: _signInWithGoogle, // Call the Google sign-in method
                           text: FFLocalizations.of(context).getText(
                             'apzszk8t' /* Sign in with Google */,
                           ),
-                          icon: Icon(
-                            Icons.abc_outlined,
+                          icon: _isLoading ? SizedBox.shrink() : Icon( // Hide icon when loading maybe? Or keep it.
+                            Icons.abc_outlined, // TODO: Replace with actual Google Icon
                             size: 24.0,
                           ),
                           options: FFButtonOptions(
@@ -489,21 +548,24 @@ class _LoginScreenWidgetState extends State<LoginScreenWidget> {
                             textStyle: FlutterFlowTheme.of(context)
                                 .titleSmall
                                 .override(
-                                  fontFamily: FlutterFlowTheme.of(context)
-                                      .titleSmallFamily,
-                                  color: Color(0xFF14181B),
-                                  letterSpacing: 0.0,
-                                  useGoogleFonts: GoogleFonts.asMap()
-                                      .containsKey(FlutterFlowTheme.of(context)
-                                          .titleSmallFamily),
-                                ),
+                              fontFamily: FlutterFlowTheme.of(context)
+                                  .titleSmallFamily,
+                              color: Color(0xFF14181B),
+                              letterSpacing: 0.0,
+                              useGoogleFonts: GoogleFonts.asMap()
+                                  .containsKey(FlutterFlowTheme.of(context)
+                                  .titleSmallFamily),
+                            ),
                             elevation: 0.0,
                             borderSide: BorderSide(
                               color: Colors.transparent,
                               width: 1.0,
                             ),
                             borderRadius: BorderRadius.circular(8.0),
+                            disabledColor: Colors.grey[300], // Optional
+                            disabledTextColor: Colors.grey, // Optional
                           ),
+                          showLoadingIndicator: _isLoading, // Show indicator
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.max,
