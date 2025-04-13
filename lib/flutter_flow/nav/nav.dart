@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:page_transition/page_transition.dart';
@@ -34,13 +35,48 @@ class AppStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 }
-
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/',
-      debugLogDiagnostics: true,
-      refreshListenable: appStateNotifier,
-      navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => NavBarPage(),
+  initialLocation: LoginScreenWidget.routePath, // Keep login as initial
+  debugLogDiagnostics: true,
+  refreshListenable: appStateNotifier, // Can still be used for other state changes
+  navigatorKey: appNavigatorKey,
+  errorBuilder: (context, state) => LoginScreenWidget(), // Error fallback to login
+
+  // --- ADD REDIRECT LOGIC ---
+  redirect: (BuildContext context, GoRouterState state) {
+    final loggedIn = FirebaseAuth.instance.currentUser != null;
+    final currentRoute = state.matchedLocation; // Get the route the user is trying to access
+
+    // Define routes accessible only when logged out
+    final loggedOutRoutes = [
+      LoginScreenWidget.routePath,
+      SignupScreenWidget.routePath,
+      // Add other auth-related routes like ForgotPasswordScreenWidget.routePath if applicable
+      '/forgotPasswordScreen', // Assuming this is the path
+    ];
+
+    final isLoggingIn = loggedOutRoutes.contains(currentRoute);
+
+    // Case 1: User is not logged in and trying to access a protected route
+    if (!loggedIn && !isLoggingIn) {
+      print('Redirecting to login: User not logged in, tried to access $currentRoute');
+      return LoginScreenWidget.routePath; // Redirect to login
+    }
+
+    // Case 2: User is logged in and trying to access login/signup
+    if (loggedIn && isLoggingIn) {
+      print('Redirecting to feed: User logged in, tried to access $currentRoute');
+      return FeedscreenWidget.routePath; // Redirect to feed screen
+    }
+
+    // Case 3: All other cases (logged in accessing protected route, logged out accessing login/signup)
+    print('No redirect needed: loggedIn=$loggedIn, trying to access $currentRoute');
+    return null; // No redirect needed
+  },
+  // --- END REDIRECT LOGIC ---
+
+
+
       routes: [
         FFRoute(
           name: '_initialize',

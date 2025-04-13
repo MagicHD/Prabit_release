@@ -29,6 +29,7 @@ class SignupScreenModel extends FlutterFlowModel<SignupScreenWidget> {
   FocusNode? textFieldFocusNode4;
   TextEditingController? textController4;
   String? Function(BuildContext, String?)? textController4Validator;
+  DateTime? datePicked;
 
   @override
   void initState(BuildContext context) {
