@@ -179,7 +179,7 @@ class _FeedcardWidgetState extends State<FeedcardWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 14.0),
+              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 14.0),
               child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

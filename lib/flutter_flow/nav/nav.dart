@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
+import '../../habit/congrats/congrats_screen_widget.dart';
+import '../../habit/photo/habit_photo_screen_widget.dart';
+import '../../photo/post_screen/post_screen_widget.dart';
 import '../../profile/calender/calender_widget.dart';
 import '/main.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -135,6 +138,54 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                   initialPage: 'HabitSelectionScreen',
                   page: HabitSelectionScreenWidget(),
                 ),
+        ), FFRoute(
+          name: HabitPhotoScreenWidget.routeName,
+          path: HabitPhotoScreenWidget.routePath,
+          builder: (context, params) { // params is FFParameters
+            // Access 'extra' directly from the GoRouterState (params.state)
+            final extraData = params.state.extra as Map<String, dynamic>?; // Cast the 'extra' object
+            final habitData = extraData?['habit'] as Map<String, dynamic>?; // Access 'habit' from extraData
+
+            if (habitData == null) {
+              print("Error: Habit data missing for HabitPhotoScreen");
+              // Returning a simple error Scaffold
+              return Scaffold(body: Center(child: Text("Error: Habit data missing")));
+            }
+            // Pass the extracted habit data
+            return HabitPhotoScreenWidget(habit: habitData);
+          },
+        ),
+        // In lib/flutter_flow/nav/nav.dart within createRouter -> routes: [...]
+        FFRoute(
+          name: HabitPostScreenWidget.routeName,
+          path: HabitPostScreenWidget.routePath,
+          builder: (context, params) { // params is FFParameters
+            // --- MODIFIED DATA EXTRACTION ---
+            // Access 'extra' directly from the GoRouterState (params.state)
+            final extraData = params.state.extra as Map<String, dynamic>? ?? {}; // Use empty map if null
+            final habitData = extraData['habit'] as Map<String, dynamic>?; // Get habit from extra
+            final imageUrl = extraData['imageUrl'] as String?; // Get imageUrl from extra
+
+            if (imageUrl == null || habitData == null) {
+              print("Error: Image URL or Habit data missing in extra for HabitPostScreen");
+              // Return an error Scaffold or navigate back
+              return Scaffold(body: Center(child: Text("Error: Missing data for post screen")));
+            }
+            // Pass the extracted data to the widget constructor
+            return HabitPostScreenWidget(
+              imageUrl: imageUrl,
+              habit: habitData,
+            );
+            // --- END MODIFIED DATA EXTRACTION ---
+          },
+        ),
+        // Keep the CongratsScreen route as it was (it doesn't need 'extra' data in this setup)
+        FFRoute(
+          name: CongratsScreenWidget.routeName,
+          path: CongratsScreenWidget.routePath,
+          builder: (context, params) {
+            return CongratsScreenWidget();
+          },
         ),
         FFRoute(
           name: GroupWidget.routeName,
@@ -170,11 +221,6 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: GroupLeaderboardWidget.routeName,
           path: GroupLeaderboardWidget.routePath,
           builder: (context, params) => GroupLeaderboardWidget(),
-        ),
-        FFRoute(
-          name: PostScreenWidget.routeName,
-          path: PostScreenWidget.routePath,
-          builder: (context, params) => PostScreenWidget(),
         ),
         FFRoute(
           name: GroupCreation2Widget.routeName,

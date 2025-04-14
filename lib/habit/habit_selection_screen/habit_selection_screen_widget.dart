@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../photo/habit_photo_screen_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -418,21 +419,24 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
 
   Widget _buildHabitsGrid(List<Map<String, dynamic>> habits) {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: FlutterFlowTheme.of(context).buttonBackground));
     }
 
     if (habits.isEmpty) {
-      // You can use the NoHabitsPlaceholder from habit_selectionScreen.txt [cite: 118]
-      // or a simple Text widget
+      // Placeholder for no habits
       return Center(
-        child: Text(
-          'No habits yet. Tap "+" to add one!',
-          style: FlutterFlowTheme.of(context).bodyMedium.override(
-            fontFamily: FlutterFlowTheme.of(context).bodyMediumFamily,
-            color: FlutterFlowTheme.of(context).secondaryText,
-            letterSpacing: 0.0,
-            useGoogleFonts: GoogleFonts.asMap().containsKey(
-                FlutterFlowTheme.of(context).bodyMediumFamily),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          child: Text(
+            _model.tabBarController?.index == 0 // Check current tab index
+                ? 'No personal habits yet.\nTap "+" to add your first one!'
+                : 'No group habits found.\nJoin or create a group!',
+            textAlign: TextAlign.center,
+            style: FlutterFlowTheme.of(context).bodyLarge.override(
+              fontFamily: 'Inter',
+              color: FlutterFlowTheme.of(context).secondaryText,
+              letterSpacing: 0.0,
+            ),
           ),
         ),
       );
@@ -440,19 +444,19 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
 
     // Use GridView.builder
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(4.0, 24.0, 4.0, 0.0), // Adjust padding as needed
+      padding: EdgeInsetsDirectional.fromSTEB(4.0, 24.0, 4.0, 16.0), // Add bottom padding
       child: GridView.builder(
         padding: EdgeInsets.zero,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 15.0,
           mainAxisSpacing: 15.0,
-          childAspectRatio: 0.9, // Adjust as needed based on HabitcardWidget size
+          childAspectRatio: 1.0, // Adjust for square cards if HabitcardWidget is square
         ),
         primary: false,
-        shrinkWrap: true, // Important inside Column/TabBarView
+        shrinkWrap: true,
         scrollDirection: Axis.vertical,
-        itemCount: habits.length, // Dynamic count
+        itemCount: habits.length,
         itemBuilder: (context, index) {
           final habit = habits[index];
 
@@ -460,27 +464,36 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
           final String name = habit['name'] ?? 'Unnamed Habit';
           final String time = habit['time'] ?? '--:--';
           final List<dynamic> days = habit['days'] ?? [];
-          final int iconCode = habit['icon'] ?? Icons.question_mark.codePoint; // Default icon code
-          final String iconFontFamily = habit['iconFontFamily'] ?? 'MaterialIcons'; // Default family
-          final Color color = _getHabitColor(index); // Get color based on index or from habit data if available
+          final int iconCode = habit['icon'] ?? Icons.question_mark.codePoint;
+          final String iconFontFamily = habit['iconFontFamily'] ?? 'MaterialIcons';
+          final Color color = _getHabitColor(index); // Use your color logic
 
-          // Create the HabitcardWidget dynamically
-          // NOTE: You might not need wrapWithModel if the HabitcardWidget state is simple
-          //       and managed internally or passed via constructor. FlutterFlow often adds
-          //       wrapWithModel automatically. If you manually edit the code, you might
-          //       need to adjust or remove the corresponding model entries in
-          //       habit_selection_screen_model.dart
-          return HabitcardWidget(
-            habitName: name,
-            habitTime: time,
-            selectedDays: days,
-            habitIconCode: iconCode,
-            habitIconFontFamily: iconFontFamily,
-            habitColor: color,
+          // --- Add GestureDetector for Navigation ---
+          return GestureDetector(
+            onTap: () {
+              print("Habit tapped: ${habit['name']}"); // Debug print
+              // Navigate to HabitPhotoScreenWidget
+              context.pushNamed(
+                HabitPhotoScreenWidget.routeName, // Use route name
+                extra: <String, dynamic>{
+                  'habit': habit, // Pass the entire habit map
+                },
+              );
+            },
+            child: HabitcardWidget(
+              // Add a key if needed for state preservation, e.g., key: ValueKey(habit['id'])
+              key: ValueKey(habit['id'] ?? index), // Use habit ID for key
+              habitName: name,
+              habitTime: time,
+              selectedDays: days,
+              habitIconCode: iconCode,
+              habitIconFontFamily: iconFontFamily,
+              habitColor: color,
+            ),
           );
+          // --- End GestureDetector ---
         },
       ),
     );
   }
-
 }

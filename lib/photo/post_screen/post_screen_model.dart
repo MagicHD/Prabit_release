@@ -1,27 +1,30 @@
-import '/flutter_flow/flutter_flow_theme.dart';
+// File: prabit_design/lib/photo/post_screen/post_screen_model.dart (If it was missing)
+import '/flutter_flow/flutter_flow_model.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import 'dart:ui';
-import 'post_screen_widget.dart' show PostScreenWidget;
+import '/flutter_flow/flutter_flow_widgets.dart'; // Usually needed for form elements
+import 'post_screen_widget.dart' show HabitPostScreenWidget; // Corrected import name
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
-class PostScreenModel extends FlutterFlowModel<PostScreenWidget> {
-  ///  State fields for stateful widgets in this page.
+class PostScreenModel extends FlutterFlowModel<HabitPostScreenWidget> { // Corrected Widget name
+  /// State fields for stateful widgets in this page.
 
+  final unfocusNode = FocusNode();
   // State field(s) for TextField widget.
   FocusNode? textFieldFocusNode;
   TextEditingController? textController;
   String? Function(BuildContext, String?)? textControllerValidator;
   // State field(s) for Switch widget.
-  bool? switchValue;
+  bool? switchValue; // FlutterFlow often uses this name
 
   @override
-  void initState(BuildContext context) {}
+  void initState(BuildContext context) {
+    // Initialize any default values if needed, e.g., switchValue
+    switchValue = true; // Default based on previous code
+  }
 
   @override
   void dispose() {
+    unfocusNode.dispose();
     textFieldFocusNode?.dispose();
     textController?.dispose();
   }
