@@ -8,12 +8,14 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/habit/habitcard/habitcard_widget.dart';
 import 'dart:ui';
-import '/index.dart';
+import '/index.dart'; // Assuming this imports necessary base widgets like HabitConfigureWidget, StatisticsScreenWidget etc.
+import '../../streak_page/streak_page_widget.dart'; // <-- ADDED IMPORT FOR STREAK PAGE
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'habit_selection_screen_model.dart';
 export 'habit_selection_screen_model.dart';
+
 
 /// Prompt:
 ///
@@ -233,7 +235,7 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
 
       // Add more colors if needed
     ];
-    // Or use colors defined in habit_selectionScreen.txt [cite: 98]
+    // Or use colors defined in habit_selectionScreen.txt
     // List<Color> colors = [ Color(0xFFFFB200), Color(0xFFBE4B02), ... ];
     return colors[index % colors.length];
   }
@@ -252,6 +254,8 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
     // Fetch habits when the screen is initialized
     _fetchHabits();
   }
+
+  int _currentStreak = 500; // Your streak variable
 
 
   @override
@@ -275,6 +279,7 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
           padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 15.0, 15.0),
           child: FloatingActionButton(
             onPressed: () async {
+              // Assuming HabitConfigureWidget.routeName is defined elsewhere, possibly via /index.dart
               context.pushNamed(HabitConfigureWidget.routeName);
             },
             backgroundColor: FlutterFlowTheme.of(context).buttonBackground,
@@ -295,42 +300,86 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
               padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 10.0),
               child: Row(
                 mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Pushes title left and icons right
                 children: [
+                  // Habits Title (stays on the left)
                   Text(
                     FFLocalizations.of(context).getText(
                       '43f5vne0' /* Habits */,
                     ),
                     style: FlutterFlowTheme.of(context).displaySmall.override(
-                          fontFamily:
-                              FlutterFlowTheme.of(context).displaySmallFamily,
-                          letterSpacing: 0.0,
-                          useGoogleFonts: GoogleFonts.asMap().containsKey(
-                              FlutterFlowTheme.of(context).displaySmallFamily),
-                        ),
-                  ),
-                  FlutterFlowIconButton(
-                    borderRadius: 8.0,
-                    buttonSize: 40.0,
-                    fillColor: FlutterFlowTheme.of(context).primary,
-                    icon: Icon(
-                      Icons.bar_chart,
-                      color: FlutterFlowTheme.of(context).info,
-                      size: 24.0,
+                      fontFamily:
+                      FlutterFlowTheme.of(context).displaySmallFamily,
+                      letterSpacing: 0.0,
+                      useGoogleFonts: GoogleFonts.asMap().containsKey(
+                          FlutterFlowTheme.of(context).displaySmallFamily),
                     ),
-                    onPressed: () async {
-                      context.pushNamed(StatisticsScreenWidget.routeName);
-                    },
+                  ),
+
+                  // Row for Streak and Statistics Icon (grouped on the right)
+                  Row(
+                    mainAxisSize: MainAxisSize.min, // Keep icons grouped
+                    children: [
+                      // -- START: MODIFIED Section - Added InkWell --
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () async {
+                          context.pushNamed(StreakPageWidget.routeName);
+                        },
+                        child: Row( // Row containing the streak icon and text
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department_rounded, // Flame icon
+                              color: Colors.orangeAccent, // Example color
+                              size: 24.0,
+                            ),
+                            SizedBox(width: 4.0), // Space between icon and text
+                            Text(
+                              '$_currentStreak', // Display the streak count
+                              style: FlutterFlowTheme.of(context).titleMedium.override(
+                                fontFamily:
+                                FlutterFlowTheme.of(context).titleMediumFamily,
+                                color: Colors.orangeAccent, // Match icon color (optional)
+                                letterSpacing: 0.0,
+                                useGoogleFonts: GoogleFonts.asMap().containsKey(
+                                    FlutterFlowTheme.of(context).titleMediumFamily),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // -- END: MODIFIED Section - Added InkWell --
+
+                      SizedBox(width: 8.0), // Space between streak and statistics icon
+
+                      // Statistics Icon Button
+                      FlutterFlowIconButton(
+                        borderRadius: 8.0,
+                        buttonSize: 40.0,
+                        fillColor: FlutterFlowTheme.of(context).primary,
+                        icon: Icon(
+                          Icons.bar_chart,
+                          color: FlutterFlowTheme.of(context).info,
+                          size: 24.0,
+                        ),
+                        onPressed: () async {
+                          // Assuming StatisticsScreenWidget.routeName is defined elsewhere
+                          context.pushNamed(StatisticsScreenWidget.routeName);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             actions: [],
-            centerTitle: true,
+            centerTitle: false, // Title is not centered
             elevation: 0.0,
           ),
-        ),
-        body: SafeArea(
+        ), // AppBar end
+        body: SafeArea( // Body Start
           top: true,
           child: Container(
             decoration: BoxDecoration(
@@ -348,31 +397,31 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
                           alignment: Alignment(0.0, 0),
                           child: TabBar(
                             labelColor:
-                                FlutterFlowTheme.of(context).primaryText,
+                            FlutterFlowTheme.of(context).primaryText,
                             unselectedLabelColor:
-                                FlutterFlowTheme.of(context).secondaryText,
+                            FlutterFlowTheme.of(context).secondaryText,
                             labelStyle: FlutterFlowTheme.of(context)
                                 .titleLarge
                                 .override(
-                                  fontFamily: FlutterFlowTheme.of(context)
-                                      .titleLargeFamily,
-                                  letterSpacing: 0.0,
-                                  useGoogleFonts: GoogleFonts.asMap()
-                                      .containsKey(FlutterFlowTheme.of(context)
-                                          .titleLargeFamily),
-                                ),
+                              fontFamily: FlutterFlowTheme.of(context)
+                                  .titleLargeFamily,
+                              letterSpacing: 0.0,
+                              useGoogleFonts: GoogleFonts.asMap()
+                                  .containsKey(FlutterFlowTheme.of(context)
+                                  .titleLargeFamily),
+                            ),
                             unselectedLabelStyle: FlutterFlowTheme.of(context)
                                 .titleMedium
                                 .override(
-                                  fontFamily: FlutterFlowTheme.of(context)
-                                      .titleMediumFamily,
-                                  letterSpacing: 0.0,
-                                  useGoogleFonts: GoogleFonts.asMap()
-                                      .containsKey(FlutterFlowTheme.of(context)
-                                          .titleMediumFamily),
-                                ),
+                              fontFamily: FlutterFlowTheme.of(context)
+                                  .titleMediumFamily,
+                              letterSpacing: 0.0,
+                              useGoogleFonts: GoogleFonts.asMap()
+                                  .containsKey(FlutterFlowTheme.of(context)
+                                  .titleMediumFamily),
+                            ),
                             indicatorColor:
-                                FlutterFlowTheme.of(context).buttonBackground,
+                            FlutterFlowTheme.of(context).buttonBackground,
                             indicatorWeight: 3.5,
                             tabs: [
                               Tab(
@@ -411,10 +460,10 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
               ),
             ),
           ),
-        ),
+        ), // Body end
       ),
     );
-  }
+  } // build method end
 
 
   Widget _buildHabitsGrid(List<Map<String, dynamic>> habits) {
@@ -473,6 +522,7 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
             onTap: () {
               print("Habit tapped: ${habit['name']}"); // Debug print
               // Navigate to HabitPhotoScreenWidget
+              // Assuming HabitPhotoScreenWidget.routeName is defined elsewhere
               context.pushNamed(
                 HabitPhotoScreenWidget.routeName, // Use route name
                 extra: <String, dynamic>{
@@ -495,5 +545,5 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
         },
       ),
     );
-  }
-}
+  } // _buildHabitsGrid end
+} // _HabitSelectionScreenWidgetState end

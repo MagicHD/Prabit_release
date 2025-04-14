@@ -115,7 +115,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primary, // Adapt if needed
         appBar: AppBar(
-          backgroundColor: Color(0xFF1A1F24), // Keep existing style
+          backgroundColor: Color(0xFF14181B), // Keep existing style
           automaticallyImplyLeading: false,
           leading: FlutterFlowIconButton(
             borderColor: Colors.transparent,
