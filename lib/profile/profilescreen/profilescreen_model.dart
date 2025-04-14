@@ -13,6 +13,10 @@ import 'package:provider/provider.dart';
 class ProfilescreenModel extends FlutterFlowModel<ProfilescreenWidget> {
   ///  State fields for stateful widgets in this page.
 
+  // State field(s) for TextField widget.
+  FocusNode? textFieldFocusNode;
+  TextEditingController? textController;
+  String? Function(BuildContext, String?)? textControllerValidator;
   // Model for Friendlistitem component.
   late FriendlistitemModel friendlistitemModel1;
   // Model for Friendlistitem component.
@@ -29,6 +33,9 @@ class ProfilescreenModel extends FlutterFlowModel<ProfilescreenWidget> {
 
   @override
   void dispose() {
+    textFieldFocusNode?.dispose();
+    textController?.dispose();
+
     friendlistitemModel1.dispose();
     friendlistitemModel2.dispose();
     friendlistitemModel3.dispose();

@@ -9,7 +9,22 @@ import 'friendlistitem_model.dart';
 export 'friendlistitem_model.dart';
 
 class FriendlistitemWidget extends StatefulWidget {
-  const FriendlistitemWidget({super.key});
+  // --- Added Parameters ---
+  final String friendUid;
+  final String username;
+  final String? profilePictureUrl; // Make nullable
+  final Function(String) onRemoveFriend; // Callback function
+  // --- End Added Parameters ---
+
+  const FriendlistitemWidget({
+    super.key,
+    // --- Required Parameters ---
+    required this.friendUid,
+    required this.username,
+    this.profilePictureUrl,
+    required this.onRemoveFriend,
+    // --- End Required Parameters ---
+  });
 
   @override
   State<FriendlistitemWidget> createState() => _FriendlistitemWidgetState();
@@ -33,18 +48,20 @@ class _FriendlistitemWidgetState extends State<FriendlistitemWidget> {
   @override
   void dispose() {
     _model.maybeDispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine if the profile picture URL is valid
+    bool hasProfilePicture = widget.profilePictureUrl != null && widget.profilePictureUrl!.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
-        color: FlutterFlowTheme.of(context).secondary,
+        color: FlutterFlowTheme.of(context).secondary, // Use secondary theme color
         borderRadius: BorderRadius.circular(9.5),
         border: Border.all(
-          color: FlutterFlowTheme.of(context).primaryBordercolor,
+          color: FlutterFlowTheme.of(context).primaryBordercolor, // Use border color from theme
         ),
       ),
       child: Padding(
@@ -53,15 +70,39 @@ class _FriendlistitemWidgetState extends State<FriendlistitemWidget> {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ClipRRect(
+            // --- Profile Picture ---
+            ClipRRect( // Use ClipRRect for rounded corners on the image itself
               borderRadius: BorderRadius.circular(8.0),
-              child: Image.network(
-                'https://picsum.photos/seed/211/600',
+              child: Container( // Wrap Image with Container for background color and icon
                 width: 40.0,
                 height: 40.0,
-                fit: BoxFit.cover,
+                decoration: BoxDecoration(
+                  color: Color(0xFF2E353E), // Placeholder background
+                  borderRadius: BorderRadius.circular(8.0), // Match ClipRRect
+                ),
+                child: hasProfilePicture
+                    ? Image.network(
+                  widget.profilePictureUrl!, // Use the passed URL
+                  width: 40.0,
+                  height: 40.0,
+                  fit: BoxFit.cover,
+                  // Add error builder for network image
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.person, // Fallback icon
+                      color: FlutterFlowTheme.of(context).info,
+                      size: 24.0,
+                    );
+                  },
+                )
+                    : Icon( // Show icon if no picture
+                  Icons.person,
+                  color: FlutterFlowTheme.of(context).info,
+                  size: 24.0,
+                ),
               ),
             ),
+            // --- End Profile Picture ---
             Expanded(
               child: Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 0.0),
@@ -69,49 +110,70 @@ class _FriendlistitemWidgetState extends State<FriendlistitemWidget> {
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // --- Username ---
                     Text(
-                      FFLocalizations.of(context).getText(
-                        'jau915vf' /* Alex Fitness */,
-                      ),
+                      // FFLocalizations.of(context).getText('jau915vf' /* Alex Fitness */,), // Remove placeholder
+                      widget.username, // Use the passed username
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            fontFamily:
-                                FlutterFlowTheme.of(context).bodyMediumFamily,
-                            color: FlutterFlowTheme.of(context).info,
-                            letterSpacing: 0.0,
-                            fontWeight: FontWeight.bold,
-                            useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                FlutterFlowTheme.of(context).bodyMediumFamily),
-                          ),
-                    ),
-                    Text(
-                      FFLocalizations.of(context).getText(
-                        'sg5gny08' /* @alexfit */,
+                        fontFamily:
+                        FlutterFlowTheme.of(context).bodyMediumFamily,
+                        color: FlutterFlowTheme.of(context).info, // Use info color from theme
+                        letterSpacing: 0.0,
+                        fontWeight: FontWeight.bold,
+                        useGoogleFonts: GoogleFonts.asMap().containsKey(
+                            FlutterFlowTheme.of(context).bodyMediumFamily),
                       ),
-                      style: FlutterFlowTheme.of(context).labelSmall.override(
-                            fontFamily:
-                                FlutterFlowTheme.of(context).labelSmallFamily,
-                            color: Colors.white,
-                            letterSpacing: 0.0,
-                            useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                FlutterFlowTheme.of(context).labelSmallFamily),
-                          ),
                     ),
+                    // --- Optional: User Handle/Subtitle ---
+                    // Text(
+                    //   FFLocalizations.of(context).getText('sg5gny08' /* @alexfit */,),
+                    //   style: FlutterFlowTheme.of(context).labelSmall.override(
+                    //         fontFamily:
+                    //             FlutterFlowTheme.of(context).labelSmallFamily,
+                    //         color: Colors.white,
+                    //         letterSpacing: 0.0,
+                    //         useGoogleFonts: GoogleFonts.asMap().containsKey(
+                    //             FlutterFlowTheme.of(context).labelSmallFamily),
+                    //       ),
+                    // ),
+                    // --- End Optional Subtitle ---
                   ],
                 ),
               ),
             ),
-            FlutterFlowIconButton(
-              borderRadius: 20.0,
-              buttonSize: 40.0,
+            // --- Burger Menu (PopupMenuButton) ---
+            PopupMenuButton<String>(
               icon: Icon(
                 Icons.more_vert,
-                color: FlutterFlowTheme.of(context).info,
+                color: FlutterFlowTheme.of(context).info, // Use info color
                 size: 24.0,
               ),
-              onPressed: () {
-                print('IconButton pressed ...');
+              tooltip: 'Options', // Add tooltip
+              onSelected: (String result) {
+                switch (result) {
+                  case 'remove':
+                  // Call the callback function passed from the parent
+                    widget.onRemoveFriend(widget.friendUid);
+                    break;
+                // Add other cases for more options if needed
+                }
               },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'remove',
+                  child: ListTile( // Use ListTile for better layout
+                    leading: Icon(Icons.person_remove_alt_1_rounded, color: FlutterFlowTheme.of(context).error),
+                    title: Text('Remove Friend', style: TextStyle(color: FlutterFlowTheme.of(context).error)),
+                  ),
+                ),
+                // Add more PopupMenuItems here for other options
+              ],
+              color: FlutterFlowTheme.of(context).secondaryBackground, // Menu background color
+              shape: RoundedRectangleBorder( // Rounded corners for the menu
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
+            // --- End Burger Menu ---
           ],
         ),
       ),
