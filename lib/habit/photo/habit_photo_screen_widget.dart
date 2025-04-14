@@ -10,7 +10,8 @@ import 'package:go_router/go_router.dart';
 import 'package:prabit_design/flutter_flow/flutter_flow_theme.dart'; // Adjust import if needed
 
 // Import the post screen route name (adjust path if needed)
-import '../../photo/post_screen/post_screen_widget.dart'; // Make sure this is the correct post screen
+import '../../photo/post_screen/post_screen_widget.dart';
+import '../review/habit_review_screen_widget.dart'; // Make sure this is the correct post screen
 
 
 class HabitPhotoScreenWidget extends StatefulWidget {
@@ -88,6 +89,11 @@ class _HabitPhotoScreenWidgetState extends State<HabitPhotoScreenWidget> with Wi
           }
       );
 
+      // --- ADD THESE PRINT STATEMENTS ---
+      print(">>> DEBUG: Rear Camera Found: Name='${rearCamera.name}', LensDirection='${rearCamera.lensDirection}'");
+      print(">>> DEBUG: Front Camera Found: Name='${frontCamera.name}', LensDirection='${frontCamera.lensDirection}'");
+      // --- END PRINT STATEMENTS ---
+
       _rearController = CameraController(
         rearCamera,
         ResolutionPreset.high, // Or choose preset as needed
@@ -164,150 +170,58 @@ class _HabitPhotoScreenWidgetState extends State<HabitPhotoScreenWidget> with Wi
   }
 
 
+  // In lib/habit/photo/habit_photo_screen_widget.dart
+
+  // --- TEMPORARY TEST 1: REAR ONLY ---
   Future<void> _capturePhotos() async {
     if (_isCapturing || !_camerasInitialized || _rearController == null) return;
 
     setState(() { _isCapturing = true; });
-    print("Starting photo capture...");
+    print(">>> TEST 1: REAR ONLY - Starting capture...");
+    _rearImageFile = null; // Clear any previous
+    _frontImageFile = null;
 
     try {
-      // --- Capture Rear Photo ---
-      if (_rearController!.value.isTakingPicture) return;
+      if (_rearController!.value.isTakingPicture) {
+        print(">>> TEST 1: Rear controller busy.");
+        setState(() { _isCapturing = false; }); return;
+      }
+      print(">>> TEST 1: Attempting REAR capture (ID: ${_rearController?.description.name})");
       _rearImageFile = await _rearController!.takePicture();
-      print('Rear photo captured: ${_rearImageFile?.path}');
+      print(">>> TEST 1: Rear capture complete. Path: ${_rearImageFile?.path}");
 
+      if (_rearImageFile != null) {
+        print(">>> TEST 1: Rear image valid. Saving for inspection.");
+        // Save it with a specific name to check later
+        final tempDir = await getTemporaryDirectory();
+        final debugPath = '${tempDir.path}/TEST_REAR_ONLY_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        await File(_rearImageFile!.path).copy(debugPath);
+        print(">>> TEST 1: Saved rear-only test image to: $debugPath");
 
-      // --- Capture Front Photo ---
-      if (_frontController != null && _frontController!.value.isInitialized) {
-        if (_frontController!.value.isTakingPicture) {
-          print("Front camera was busy, delaying slightly...");
-          await Future.delayed(Duration(milliseconds: 100)); // Small delay if busy
-          if (_frontController!.value.isTakingPicture) return; // Give up if still busy
+        // Show a success message and maybe pop back? Or navigate to review with only one image?
+        // For now, just show success and allow manual closing/retrying.
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Rear capture saved to $debugPath')));
         }
-        _frontImageFile = await _frontController!.takePicture();
-        print('Front photo captured: ${_frontImageFile?.path}');
+
       } else {
-        // If no front controller (fallback), take another rear picture for the 'front'
-        print("Taking second rear photo as front fallback");
-        _rearController!.resumePreview(); // Resume preview before taking second shot
-        await Future.delayed(Duration(milliseconds: 100)); // Ensure preview is back
-        _frontImageFile = await _rearController!.takePicture();
-        print('Fallback front photo captured: ${_frontImageFile?.path}');
+        print(">>> TEST 1: Rear capture failed silently (file is null).");
+        if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Rear capture failed.'))); }
       }
-
-
-      if (_rearImageFile != null && _frontImageFile != null) {
-        print("Both photos captured, proceeding to merge.");
-        _mergeAndNavigate();
-      } else {
-        print("Error: One or both photos failed to capture.");
-        // Handle error - maybe show a retry button?
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to capture photos. Please try again.'))
-          );
-          setState(() { _isCapturing = false; }); // Allow retry
-        }
-      }
-
-    } on CameraException catch (e) {
-      print('Error capturing photo: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error capturing photo: ${e.description}'))
-        );
-      }
-      setState(() { _isCapturing = false; });
-    } catch (e) {
-      print('Unexpected error capturing photo: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An unexpected error occurred during capture.'))
-        );
-      }
-      setState(() { _isCapturing = false; });
-    }
-  }
-
-  Future<void> _mergeAndNavigate() async {
-    if (_rearImageFile == null || _frontImageFile == null) return;
-
-    try {
-      // Load images using the 'image' package
-      final rearBytes = await File(_rearImageFile!.path).readAsBytes();
-      final frontBytes = await File(_frontImageFile!.path).readAsBytes();
-
-      img.Image? rearImage = img.decodeImage(rearBytes);
-      img.Image? frontImage = img.decodeImage(frontBytes);
-
-      if (rearImage == null || frontImage == null) {
-        print("Error decoding images.");
-        // Handle error
-        return;
-      }
-
-      // --- Image Merging Logic (BeReal Style) ---
-      // Resize front image to be smaller (e.g., 1/4 width of rear)
-      int frontWidth = rearImage.width ~/ 4;
-      img.Image resizedFront = img.copyResize(frontImage, width: frontWidth);
-
-      // Position front image (e.g., top-left corner with padding)
-      int padding = rearImage.width ~/ 30; // Small padding based on rear image size
-
-      // Merge: Draw the resized front image onto the rear image
-      // Ensure coordinates are within bounds
-      img.compositeImage(
-        rearImage, // Destination image
-        resizedFront, // Source image
-        dstX: padding, // Destination X
-        dstY: padding, // Destination Y
-      );
-      // Alternatively using drawImage which might handle transparency better if needed
-      // img.drawImage(rearImage, resizedFront, dstX: padding, dstY: padding);
-
-      // --- End Merging Logic ---
-
-      // Get temp directory to save merged image
-      final tempDir = await getTemporaryDirectory();
-      final mergedFilePath = '${tempDir.path}/merged_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final mergedFile = File(mergedFilePath);
-
-      // Encode the merged image as JPG and save
-      await mergedFile.writeAsBytes(img.encodeJpg(rearImage, quality: 85)); // Adjust quality as needed
-      print('Merged image saved to: $mergedFilePath');
-
-      // --- Navigation ---
-      // Navigate to the Post Screen, passing the merged image path and habit data
-      if (mounted) {
-        // --- CORRECTED NAVIGATION CALL ---
-        print('>>> DEBUG: Navigating to ${HabitPostScreenWidget.routeName} with extra: ${{
-          'habit_name': widget.habit['name'], // Print something simple from habit
-          'imageUrl_length': mergedFilePath.length // Print length to confirm value
-        }}'); // Optional debug print added
-
-        context.pushNamed(
-          HabitPostScreenWidget.routeName, // Target route name
-          extra: { // Pass BOTH items in the 'extra' map
-            'habit': widget.habit,
-            'imageUrl': mergedFilePath, // Pass the file path HERE
-          },
-          // Ensure pathParameters is completely removed
-        );
-        // --- END CORRECTED NAVIGATION CALL ---
-        print("Navigating to Post Screen.");
-      }
-
 
     } catch (e) {
-      print("Error merging or saving image: $e");
+      print(">>> TEST 1: Error during rear capture: $e");
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Error: ${e.toString()}'))); }
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error processing image.'))
-        );
-        setState(() { _isCapturing = false; }); // Allow retry?
+        setState(() { _isCapturing = false; }); // Allow trying again or closing
       }
     }
   }
+  // --- END TEMPORARY TEST 1 ---
+
+  // --- Make sure _mergeAndNavigate is commented out or removed ---
+  // Future<void> _mergeAndNavigate() async { ... }apturePhotos
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {

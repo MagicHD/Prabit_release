@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../habit/congrats/congrats_screen_widget.dart';
 import '../../habit/photo/habit_photo_screen_widget.dart';
+import '../../habit/review/habit_review_screen_widget.dart';
 import '../../photo/post_screen/post_screen_widget.dart';
 import '../../profile/calender/calender_widget.dart';
 import '/main.dart';
@@ -177,6 +178,27 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               habit: habitData,
             );
             // --- END MODIFIED DATA EXTRACTION ---
+          },
+        ),FFRoute(
+          name: HabitReviewScreenWidget.routeName,
+          path: HabitReviewScreenWidget.routePath,
+          builder: (context, params) {
+            final extraData = params.state.extra as Map<String, dynamic>? ?? {};
+            final rearPath = extraData['rearImagePath'] as String?;
+            final frontPath = extraData['frontImagePath'] as String?;
+            final habitData = extraData['habit'] as Map<String, dynamic>?;
+
+            if (rearPath == null || frontPath == null || habitData == null) {
+              print("Error: Missing image paths or habit data for Review Screen");
+              // Handle error appropriately - maybe pop back or show error
+              return Scaffold(body: Center(child: Text("Error loading review screen data.")));
+            }
+
+            return HabitReviewScreenWidget(
+              rearImagePath: rearPath,
+              frontImagePath: frontPath,
+              habit: habitData,
+            );
           },
         ),
         // Keep the CongratsScreen route as it was (it doesn't need 'extra' data in this setup)
