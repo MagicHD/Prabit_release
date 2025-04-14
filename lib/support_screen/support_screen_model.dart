@@ -9,16 +9,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class SupportScreenModel extends FlutterFlowModel<SupportScreenWidget> {
-  ///  State fields for stateful widgets in this page.
-
-  // State field(s) for TextField widget.
+  // State field(s) for TextField widget (Email).
   FocusNode? textFieldFocusNode1;
   TextEditingController? textController1;
   String? Function(BuildContext, String?)? textController1Validator;
-  // State field(s) for TextField widget.
+
+  // State field(s) for TextField widget (Message).
   FocusNode? textFieldFocusNode2;
   TextEditingController? textController2;
   String? Function(BuildContext, String?)? textController2Validator;
+
+  // State field for Radio Button group (Reason for contact)
+  String? selectedReason; // Variable to store the selected reason
 
   @override
   void initState(BuildContext context) {}
