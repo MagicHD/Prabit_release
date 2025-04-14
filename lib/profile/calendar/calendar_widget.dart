@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'calendar_model.dart';
 export 'calendar_model.dart';
+import 'package:intl/intl.dart';
+import 'dart:math';
 
 /// The calendar screen of the Prabit app is designed with a dark, elegant
 /// interface that maintains consistency with the overall design language of
@@ -70,6 +72,10 @@ class CalendarWidget extends StatefulWidget {
 }
 
 class _CalendarWidgetState extends State<CalendarWidget> {
+
+  late DateTime _currentMonth;
+  late List<DateTime?> _daysInGrid;
+
   late CalendarModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -78,6 +84,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => CalendarModel());
+    _currentMonth = DateTime.now();
+    _generateGridData();
   }
 
   @override
@@ -86,6 +94,56 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
     super.dispose();
   }
+
+  int _daysInMonth(DateTime date) {
+    return DateTime(date.year, date.month + 1, 0).day;
+  }
+
+
+  void _generateGridData() {
+    final year = _currentMonth.year;
+    final month = _currentMonth.month;
+
+    final totalDaysInMonth = _daysInMonth(_currentMonth);
+    final firstDayOfMonth = DateTime(year, month, 1);
+    // Calculate weekday (Monday=1, Sunday=7), adjust to start week on Sunday (Sunday=0)
+    int firstWeekdayOfMonth = firstDayOfMonth.weekday % 7;
+
+    final List<DateTime?> days = [];
+
+    // Add placeholders for days before the 1st of the month
+    for (var i = 0; i < firstWeekdayOfMonth; i++) {
+      days.add(null);
+    }
+
+    // Add actual days of the month
+    for (var day = 1; day <= totalDaysInMonth; day++) {
+      days.add(DateTime(year, month, day));
+    }
+
+    // Optional: Add placeholders at the end to fill the grid (usually 6 rows = 42 cells)
+    // int remainingCells = 42 - days.length; // Assuming 6 rows max
+    // Alternatively, calculate based on rows needed:
+    int gridCells = (days.length / 7).ceil() * 7; // Calculate total cells needed for full weeks
+    int remainingCells = max(0, gridCells - days.length); // Ensure non-negative
+
+    for (var i = 0; i < remainingCells; i++) {
+      days.add(null);
+    }
+
+
+    setState(() {
+      _daysInGrid = days;
+    });
+  }
+
+  void _changeMonth(int direction) {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + direction, 1);
+      _generateGridData(); // Regenerate grid for the new month
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -186,13 +244,11 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             size: 20.0,
                           ),
                           onPressed: () {
-                            print('IconButton pressed ...');
+                            _changeMonth(-1);
                           },
                         ),
                         Text(
-                          FFLocalizations.of(context).getText(
-                            'qila67g3' /* March 2025 */,
-                          ),
+                          DateFormat('MMMM yyyy').format(_currentMonth),
                           style: FlutterFlowTheme.of(context)
                               .titleMedium
                               .override(
@@ -215,7 +271,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             size: 20.0,
                           ),
                           onPressed: () {
-                            print('IconButton pressed ...');
+                            _changeMonth(1);
                           },
                         ),
                       ],
@@ -343,7 +399,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                       ],
                     ),
                   ),
-                  GridView(
+                  // Replace the entire existing GridView(...) block with this:
+                  GridView.builder(
                     padding: EdgeInsets.zero,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 7,
@@ -351,965 +408,34 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                       mainAxisSpacing: 8.0,
                       childAspectRatio: 1.0,
                     ),
+                    itemCount: _daysInGrid.length, // Use the dynamic list count
                     shrinkWrap: true,
-                    children: [
-                      wrapWithModel(
-                        model: _model.calenderModel,
-                        updateCallback: () => safeSetState(() {}),
-                        child: CalenderWidget(
-                          date: '22/22/22',
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '4qj321w0' /* 1 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
+                    physics: NeverScrollableScrollPhysics(), // Add if GridView is inside a Column/ScrollView
+                    itemBuilder: (context, index) {
+                      final dateTime = _daysInGrid[index]; // Get DateTime or null
+
+                      if (dateTime == null) {
+                        // It's a placeholder cell
+                        return Container(
+                          width: 45.0,
+                          height: 45.0,
+                          decoration: BoxDecoration(
+                            // Use a subtle background for placeholders
+                            color: Color(0x1AFFFFFF), // Semi-transparent white or another theme color
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'jn8sj7b4' /* 2 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '5obmi5ju' /* 3 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              's3hxx9tj' /* 4 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'e6zaqfuc' /* 5 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '6ttaw8xf' /* 6 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'k5soyhgt' /* 7 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'uuvvq7xg' /* 8 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'g54285j5' /* 9 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'ibv418ck' /* 11 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'uz8d7glt' /* 12 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'xwdtwmgx' /* 13 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'v47dxaoi' /* 14 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Stack(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Text(
-                                FFLocalizations.of(context).getText(
-                                  'nyqax5i2' /* 15 */,
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Inter',
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.normal,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey('Inter'),
-                                    ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(0.0, 1.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.network(
-                                  'https://images.unsplash.com/photo-1595225386386-79c3543adbd9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw0fHxtZWNoYW5pY2FsJTIwa2V5Ym9hcmR8ZW58MHx8fHwxNzQzODM3MjcwfDA&ixlib=rb-4.0.3&q=80&w=1080',
-                                  width: 45.0,
-                                  height: 22.0,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(1.0, -1.0),
-                              child: Container(
-                                width: 16.0,
-                                height: 16.0,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        'fkyy5wq5' /* 3 */,
-                                      ),
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodySmall
-                                          .override(
-                                            fontFamily: 'Inter',
-                                            color: Colors.white,
-                                            fontSize: 12.0,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.normal,
-                                            useGoogleFonts: GoogleFonts.asMap()
-                                                .containsKey('Inter'),
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'bzdt9s1p' /* 16 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'wfhih6hk' /* 17 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Stack(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Text(
-                                FFLocalizations.of(context).getText(
-                                  '6jeepcrh' /* 18 */,
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Inter',
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.normal,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey('Inter'),
-                                    ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(0.0, 1.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.network(
-                                  '\"500x500?nature#2\"',
-                                  width: 45.0,
-                                  height: 22.0,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'l98l1wkr' /* 19 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '5c4u5gc1' /* 20 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'lwbsj8pm' /* 21 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Stack(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Text(
-                                FFLocalizations.of(context).getText(
-                                  'a1syk1w3' /* 22 */,
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Inter',
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.normal,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey('Inter'),
-                                    ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(0.0, 1.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(0.0),
-                                child: Image.network(
-                                  '\"500x500?nature#3\"',
-                                  width: 45.0,
-                                  height: 22.0,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional(1.0, -1.0),
-                              child: Container(
-                                width: 16.0,
-                                height: 16.0,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Align(
-                                  alignment: AlignmentDirectional(0.0, 0.0),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text(
-                                      FFLocalizations.of(context).getText(
-                                        'scann1ne' /* 2 */,
-                                      ),
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodySmall
-                                          .override(
-                                            fontFamily: 'Inter',
-                                            color: Colors.white,
-                                            fontSize: 12.0,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.normal,
-                                            useGoogleFonts: GoogleFonts.asMap()
-                                                .containsKey('Inter'),
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'uk5vf7wf' /* 23 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'u0v8xomu' /* 24 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '1hwjpcfq' /* 25 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '4x0db481' /* 26 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '7je9ecp1' /* 27 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              '77iidrvy' /* 28 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'fskyvbv4' /* 29 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'urmmp82a' /* 30 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: 45.0,
-                        height: 45.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3035),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Text(
-                            FFLocalizations.of(context).getText(
-                              'lm7c2zg4' /* 31 */,
-                            ),
-                            style: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .override(
-                                  fontFamily: 'Inter',
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FontWeight.normal,
-                                  useGoogleFonts:
-                                      GoogleFonts.asMap().containsKey('Inter'),
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                        );
+                      } else {
+                        // It's a valid day, use your CalenderWidget
+                        // Ensure the import path for CalenderWidget is correct
+                        return CalenderWidget(
+                          key: ValueKey(dateTime), // Add a key for better state management
+                          date: dateTime, // Pass the DateTime for this day
+                        );
+                      }
+                    },
+                  )
+                  // --- End of GridView replacement ---
                 ],
               ),
             ),

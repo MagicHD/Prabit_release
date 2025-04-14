@@ -1,3 +1,8 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -65,18 +70,331 @@ class _GroupWidgetState extends State<GroupWidget> {
   late GroupModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? ''; // Get current user ID
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => GroupModel());
+    _model.textController ??= TextEditingController();
+    _model.textFieldFocusNode ??= FocusNode();
+
+    _fetchUserGroups();
+    _model.textController!.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _model.textController!.removeListener(_onSearchChanged); // <-- Add listener removal
+    _model.debounceTimer?.cancel(); // <-- Add timer cancellation
     _model.dispose();
-
     super.dispose();
+  }
+
+  // --- Debounce search input ---
+  void _onSearchChanged() {
+    // Cancel any existing timer
+    if (_model.debounceTimer?.isActive ?? false) _model.debounceTimer!.cancel();
+
+    // Start a new timer
+    _model.debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      // Check if the text has actually changed to avoid unnecessary fetches
+      if (_model.searchQuery != _model.textController!.text) {
+        setState(() {
+          // Update the search query in the model
+          _model.searchQuery = _model.textController!.text;
+        });
+        // Trigger the search fetch
+        _fetchSearchResults();
+      }
+    });
+  }
+
+  // --- Widget Builder for Default View (My Groups & Discover) ---
+  Widget _buildDefaultGroupLists() {
+    // This assumes your "My Groups" and "Discover Groups" Columns
+    // are inside the SingleChildScrollView you just replaced.
+    // You need to reconstruct this part, likely using a ListView.
+    return ListView( // Use ListView for scrolling
+      padding: EdgeInsets.zero, // Reset padding if parent Padding handles it
+      children: [
+        // --- My Groups Section ---
+        Text(
+          FFLocalizations.of(context).getText('79hv9d87' /* My Groups */),
+          style: FlutterFlowTheme.of(context).titleLarge,
+        ),
+        SizedBox(height: 12.0),
+        // --- Paste your dynamic "My Groups" logic here ---
+        _model.isLoadingMyGroups
+            ? Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20.0),
+          child: Center(child: CircularProgressIndicator()),
+        )
+            : _model.userGroups.isEmpty
+            ? Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20.0),
+          child: Center(
+            child: Text(
+              'You haven\'t joined any groups yet.',
+              style: FlutterFlowTheme.of(context).bodyMedium,
+            ),
+          ),
+        )
+            : Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _model.userGroups.map((group) {
+            // Use the same widget as before (e.g., ExistingGroupWidget or _buildGroupTile)
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              // Replace with your actual group tile widget creation
+              child: ExistingGroupWidget(
+                groupname: group['groupName'],
+                membercount: group['memberCount'],
+                icon: FaIcon(FontAwesomeIcons.users), // Placeholder
+                // Pass groupId etc. if needed
+              ),
+            );
+          }).toList(),
+        ),
+        // --- End of My Groups Dynamic Logic ---
+        SizedBox(height: 24.0),
+
+        // --- Discover Groups Section (Keep your existing hardcoded Discover section for now) ---
+        Text(
+          FFLocalizations.of(context).getText('82rc6hzr' /* Discover Groups */),
+          style: FlutterFlowTheme.of(context).titleLarge,
+        ),
+        SizedBox(height: 12.0),
+        // --- Keep your hardcoded Discover Group Widgets here for now ---
+        // Example:
+        // wrapWithModel(
+        //   model: _model.discoverGroupModel1,
+        //   updateCallback: () => safeSetState(() {}),
+        //   child: DiscoverGroupWidget(),
+        // ),
+        // ... other discover widgets ...
+        // --- End of Discover Groups Section ---
+
+        // Add some bottom padding inside the scroll view
+        SizedBox(height: 80), // To prevent FAB overlap
+      ],
+    );
+  }
+
+  // --- Widget Builder for Search Results View ---
+  Widget _buildSearchResultsList() {
+    if (_model.isLoadingSearchResults) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    // Check if the search query is empty AFTER loading (should not happen with current logic, but safe check)
+    if (_model.searchQuery.trim().isEmpty){
+      return Center(
+        child: Text(
+          'Enter a search term to find groups.',
+          style: FlutterFlowTheme.of(context).bodyMedium,
+        ),
+      );
+    }
+
+    // Check if results are empty for the given query
+    if (_model.searchResults.isEmpty) {
+      return Center(
+        child: Text(
+          'No groups found matching "${_model.searchQuery}"',
+          textAlign: TextAlign.center, // Center text
+          style: FlutterFlowTheme.of(context).bodyMedium,
+        ),
+      );
+    }
+
+    // Build the list using search results
+    return ListView.separated(
+      padding: EdgeInsets.zero, // List takes full space in Expanded
+      itemCount: _model.searchResults.length,
+      itemBuilder: (context, index) {
+        final group = _model.searchResults[index];
+        // --- Use the SAME widget you use for "My Groups" items ---
+        // Option A: ExistingGroupWidget
+        return ExistingGroupWidget(
+          groupname: group['groupName'],
+          membercount: group['memberCount'],
+          icon: FaIcon(FontAwesomeIcons.search), // Example search icon
+          // Pass groupId etc. if needed
+          // Add logic to show a "Join" button if !group['isMember']
+        );
+        // Option B: Use a custom tile builder like _buildGroupTile from previous examples
+        // return _buildGroupTile(group); // Ensure _buildGroupTile handles join buttons
+      },
+      separatorBuilder: (context, index) => SizedBox(height: 12.0), // Spacing
+    );
+  }
+
+
+  // --- Fetch Search Results ---
+  // Replace the existing _fetchSearchResults function with this one
+
+// --- Fetch Search Results (with Group Code Logic) ---
+  Future<void> _fetchSearchResults() async {
+    final query = _model.searchQuery.trim(); // Use trimmed query
+    final queryLower = query.toLowerCase(); // Lowercase for name search
+
+    if (query.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _model.searchResults = [];
+          _model.isLoadingSearchResults = false;
+          _model.isSearching = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _model.isLoadingSearchResults = true;
+        _model.isSearching = true;
+      });
+    }
+
+    try {
+      QuerySnapshot querySnapshot;
+      bool searchedByCode = false; // Flag to know if we already got results by code
+
+      // Check if the query looks like a group code (e.g., length 8) [cite: 110]
+      // *** Adjust the length check (e.g., == 8) if your group codes have a different fixed length ***
+      if (query.length == 8) {
+        print('Searching by group code: $query'); // Debugging print
+        querySnapshot = await FirebaseFirestore.instance
+            .collection('groups')
+            .where('groupCode', isEqualTo: query) // Query by groupCode field [cite: 110]
+            .get();
+        searchedByCode = true;
+      } else {
+        // Otherwise, search by name.
+        // Option 1: Fetch all and filter (less efficient, as previously implemented)
+        // querySnapshot = await FirebaseFirestore.instance.collection('groups').get();
+
+        // Option 2: Fetch only public groups like group_screen.txt (more efficient for name search) [cite: 111]
+        // Requires 'groupType' field to be correctly set on your documents.
+        print('Searching public groups by name containing: $queryLower'); // Debugging print
+        querySnapshot = await FirebaseFirestore.instance
+            .collection('groups')
+            .where('groupType', whereIn: ['Public - Instant Join', 'Public - Request & Admin Approval']) // Adjust types if needed [cite: 111]
+            .get(); // We will filter by name client-side after this initial fetch
+      }
+
+      // Process the snapshot results
+      List<Map<String, dynamic>> results = querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>? ?? {};
+        // Ensure you retrieve 'groupCode' if you need it later (e.g., for display)
+        return {
+          'groupId': doc.id,
+          'groupName': data['groupName'] ?? 'Unnamed Group',
+          'groupImageUrl': data['groupImageUrl'],
+          'groupType': data['groupType'] ?? 'Unknown',
+          'memberCount': (data['members'] as List?)?.length.toString() ?? '0',
+          'isMember': (data['members'] as List?)?.contains(currentUserId) ?? false,
+          'groupCode': data['groupCode'], // Include group code in the map
+        };
+      }).toList(); // Use toList() here
+
+      // If we didn't search by code initially, filter the public groups by name client-side [cite: 113]
+      if (!searchedByCode) {
+        results = results.where((group) =>
+            group['groupName'].toLowerCase().contains(queryLower)
+        ).toList();
+      }
+
+
+      if (mounted) {
+        setState(() {
+          _model.searchResults = results; // Update results
+          _model.isLoadingSearchResults = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching search results: $e');
+      if (mounted) {
+        setState(() {
+          _model.searchResults = [];
+          _model.isLoadingSearchResults = false;
+        });
+        // Optionally show an error message
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Error searching groups.')),
+        // );
+      }
+    }
+  }
+
+  // Add this function within your _GroupWidgetState class
+  // --- Fetch User's Groups ---
+  Future<void> _fetchUserGroups() async {
+    // Ensure currentUserId is available (it's already defined in your class)
+    if (currentUserId.isEmpty) {
+      if (mounted) { // Check if the widget is still mounted before calling setState
+        setState(() => _model.isLoadingMyGroups = false);
+      }
+      return;
+    }
+
+    // Set loading state to true before fetching
+    if (mounted) {
+      setState(() => _model.isLoadingMyGroups = true);
+    }
+
+    try {
+      final userGroupsSnapshot = await FirebaseFirestore.instance
+          .collection('groups') // Your main groups collection
+          .where('members', arrayContains: currentUserId)
+          .get();
+
+      // Process the documents into a list of maps
+      final groups = userGroupsSnapshot.docs.map((doc) {
+        final data = doc.data();
+        // Calculate member count safely
+        final membersList = data['members'] as List?;
+        final memberCount = membersList?.length.toString() ?? '0';
+
+        return {
+          'groupId': doc.id,
+          'groupName': data['groupName'] ?? 'Unnamed Group',
+          'groupImageUrl': data['groupImageUrl'], // Will be null if not present
+          'groupType': data['groupType'] ?? 'Unknown',
+          'memberCount': memberCount, // Use calculated member count
+          'isMember': true, // User is part of this group
+        };
+      }).toList();
+
+      // Update the model state if the widget is still mounted
+      if (mounted) {
+        setState(() {
+          _model.userGroups = groups;
+          _model.isLoadingMyGroups = false; // Set loading to false
+        });
+      }
+    } catch (e) {
+      print('Error fetching user groups: $e');
+      if (mounted) {
+        setState(() => _model.isLoadingMyGroups = false); // Ensure loading stops on error
+        // Optionally show an error message
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Error loading your groups.')),
+        // );
+      }
+    }
+  }
+
+  void _navigateToGroupChat(String groupId, String groupName) {
+    // Use FlutterFlow's navigation if preferred, or standard Navigator
+    context.pushNamed(
+      GroupChatWidget.routeName, // Make sure GroupChatWidget has a routeName defined
+      queryParameters: {
+        'groupId': groupId, // Pass parameters as needed by GroupChatWidget
+        'groupName': groupName,
+      }.withoutNulls,
+    );
   }
 
   @override
@@ -123,13 +441,29 @@ class _GroupWidgetState extends State<GroupWidget> {
                 child: FlutterFlowIconButton(
                   borderRadius: 40.0,
                   buttonSize: 40.0,
+                  // --- CHANGE ICON HERE ---
                   icon: Icon(
-                    Icons.search_rounded,
+                    _model.showSearch ? Icons.close : Icons.search_rounded, // Toggle icon
                     color: Colors.white,
                     size: 24.0,
                   ),
-                  onPressed: () {
-                    print('IconButton pressed ...');
+                  // --- REPLACE onPressed HERE ---
+                  onPressed: () async { // Keep async if needed for other reasons
+                    setState(() {
+                      _model.showSearch = !_model.showSearch;
+                      if (!_model.showSearch) {
+                        // --- START: Modify this block ---
+                        _model.textController?.clear(); // Clear the text field
+                        _model.searchQuery = '';       // Clear the query state
+                        _model.searchResults = [];   // Clear previous results
+                        _model.isSearching = false;    // Reset searching flag
+                        _model.isLoadingSearchResults = false; // Reset loading flag
+                        FocusScope.of(context).unfocus(); // Unfocus keyboard
+                        // --- END: Modify this block ---
+                      } else {
+                        _model.textFieldFocusNode?.requestFocus(); // Request focus when opening
+                      }
+                    });
                   },
                 ),
               ),
@@ -140,111 +474,64 @@ class _GroupWidgetState extends State<GroupWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: Container(
+          child: Container( // Keep outer Container if needed for background color/decoration
             decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).primary,
+              color: FlutterFlowTheme.of(context).primaryBackground, // Use your theme background
             ),
-            child: Padding(
+            child: Padding( // Keep Padding if needed for overall screen padding
               padding: EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          FFLocalizations.of(context).getText(
-                            '79hv9d87' /* My Groups */,
+              child: Column( // Use Column as the main layout element
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- Search Bar (Conditionally Visible) ---
+                  if (_model.showSearch)
+                    Padding(
+                      // Use padding consistent with your previous search bar style
+                      padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 12.0),
+                      child: TextFormField(
+                        controller: _model.textController,
+                        focusNode: _model.textFieldFocusNode,
+                        // onChanged is handled by the listener now
+                        autofocus: true,
+                        obscureText: false,
+                        decoration: InputDecoration(
+                          hintText: "Search all groups by name...", // Updated hint text
+                          hintStyle: FlutterFlowTheme.of(context).labelMedium,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: FlutterFlowTheme.of(context).secondaryText,
                           ),
-                          style: FlutterFlowTheme.of(context)
-                              .titleLarge
-                              .override(
-                                fontFamily: FlutterFlowTheme.of(context)
-                                    .titleLargeFamily,
-                                letterSpacing: 0.0,
-                                useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                    FlutterFlowTheme.of(context)
-                                        .titleLargeFamily),
-                              ),
-                        ),
-                        wrapWithModel(
-                          model: _model.existingGroupModel1,
-                          updateCallback: () => safeSetState(() {}),
-                          child: ExistingGroupWidget(
-                            groupname: 'Gym',
-                            membercount: '123',
-                            icon: FaIcon(
-                              FontAwesomeIcons.alignCenter,
+                          filled: true,
+                          fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                          contentPadding: EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 0.0, 0.0),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).alternate,
+                              width: 1.0,
                             ),
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
-                        ),
-                        wrapWithModel(
-                          model: _model.existingGroupModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: ExistingGroupWidget(
-                            icon: FaIcon(
-                              FontAwesomeIcons.airbnb,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: FlutterFlowTheme.of(context).primary,
+                              width: 1.0,
                             ),
+                            borderRadius: BorderRadius.circular(12.0),
                           ),
                         ),
-                        wrapWithModel(
-                          model: _model.existingGroupModel3,
-                          updateCallback: () => safeSetState(() {}),
-                          child: ExistingGroupWidget(
-                            icon: FaIcon(
-                              FontAwesomeIcons.airFreshener,
-                            ),
-                          ),
-                        ),
-                      ].divide(SizedBox(height: 12.0)),
+                        style: FlutterFlowTheme.of(context).bodyMedium,
+                        cursorColor: FlutterFlowTheme.of(context).primary,
+                      ),
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          FFLocalizations.of(context).getText(
-                            '82rc6hzr' /* Discover Groups */,
-                          ),
-                          style: FlutterFlowTheme.of(context)
-                              .titleLarge
-                              .override(
-                                fontFamily: FlutterFlowTheme.of(context)
-                                    .titleLargeFamily,
-                                letterSpacing: 0.0,
-                                useGoogleFonts: GoogleFonts.asMap().containsKey(
-                                    FlutterFlowTheme.of(context)
-                                        .titleLargeFamily),
-                              ),
-                        ),
-                        wrapWithModel(
-                          model: _model.discoverGroupModel1,
-                          updateCallback: () => safeSetState(() {}),
-                          child: DiscoverGroupWidget(),
-                        ),
-                        wrapWithModel(
-                          model: _model.discoverGroupModel2,
-                          updateCallback: () => safeSetState(() {}),
-                          child: DiscoverGroupWidget(
-                            groupname: 'wer',
-                            members: 'wer',
-                          ),
-                        ),
-                        wrapWithModel(
-                          model: _model.discoverGroupModel3,
-                          updateCallback: () => safeSetState(() {}),
-                          child: DiscoverGroupWidget(
-                            groupname: 'werwerwer',
-                            members: 'weeee',
-                          ),
-                        ),
-                      ].divide(SizedBox(height: 12.0)),
-                    ),
-                  ].divide(SizedBox(height: 24.0)),
-                ),
+
+                  // --- Content Area (Conditionally Shows Search Results or Default Lists) ---
+                  Expanded( // Use Expanded to make the list area fill remaining space
+                    child: _model.isSearching // Check if we are in search mode (query entered or loading results)
+                        ? _buildSearchResultsList() // Show search results list
+                        : _buildDefaultGroupLists(), // Show default My Groups / Discover
+                  ),
+                ],
               ),
             ),
           ),
@@ -252,4 +539,16 @@ class _GroupWidgetState extends State<GroupWidget> {
       ),
     );
   }
-}
+  Color _getGroupColorFromName(String name) {
+    final colors = [
+      Color(0xFF3B82F6), Color(0xFF9333EA), Color(0xFF22C55E),
+      Color(0xFFEA580C), Color(0xFFDC2626), Color(0xFF0D9488),
+      Color(0xFFF43F5E), Color(0xFF0D6DFD),
+      // Add more colors if needed
+    ];
+    // Use hashCode for simple distribution, ensure colors list is not empty
+    return colors.isNotEmpty ? colors[name.hashCode % colors.length] : Colors.grey;
+  }
+
+} //
+

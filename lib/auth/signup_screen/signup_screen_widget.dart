@@ -29,7 +29,7 @@ export 'signup_screen_model.dart';
 /// to continue” This introductory message is friendly and informative,
 /// setting the tone for re-engaging with the app. Input Fields Two form
 /// fields follow, both styled with a dark background, rounded corners, and
-/// subtle outlines: Email: Label: “Email” in white Placeholder:
+/// subtle outlines: Email: Label: “Email” in whi te Placeholder:
 /// “you@example.com” in a lighter gray Password: Label: “Password” Includes a
 /// “Forgot password?” link on the right in bright blue, allowing easy
 /// recovery access The fields are minimal, clearly spaced, and provide
