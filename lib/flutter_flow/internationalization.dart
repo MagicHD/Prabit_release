@@ -174,7 +174,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
     'pappnzlc': {
-      'de': 'prabit_user',
+      'de': 'lazylevin123',
       'en': '',
     },
     '6z20lrxo': {
@@ -185,24 +185,8 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'de': 'I\'m tracking my habits and making progress every day!',
       'en': '',
     },
-    '6h0iakqi': {
-      'de': 'Edit Profile',
-      'en': '',
-    },
-    's13acu56': {
-      'de': 'Share Profile',
-      'en': '',
-    },
-    'wx5w9agc': {
-      'de': 'Friends',
-      'en': '',
-    },
-    'zbaa0guh': {
-      'de': 'Requests',
-      'en': '',
-    },
-    'my4enr56': {
-      'de': 'Add',
+    '3nqlkwra': {
+      'de': 'Search friends...',
       'en': '',
     },
   },
@@ -1180,8 +1164,28 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'de': 'Group Type',
       'en': '',
     },
-    'h3vlcvbb': {
-      'de': 'Public',
+    'habrbvsb': {
+      'de': 'Private',
+      'en': '',
+    },
+    'qtlpe3yt': {
+      'de': 'Only visible via link',
+      'en': '',
+    },
+    'u7c2h67w': {
+      'de': 'Private',
+      'en': '',
+    },
+    '931z9byq': {
+      'de': 'Only visible via link',
+      'en': '',
+    },
+    'sxcg6a6z': {
+      'de': 'Private',
+      'en': '',
+    },
+    'neixencx': {
+      'de': 'Only visible via link',
       'en': '',
     },
     'kqrliash': {
@@ -1226,30 +1230,6 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
     },
     'wmno4n0p': {
       'de': 'Select Icon',
-      'en': '',
-    },
-    'dah2nitz': {
-      'de': 'Preview',
-      'en': '',
-    },
-    'z6jj9efq': {
-      'de': 'Habit Name',
-      'en': '',
-    },
-    'r7rczoz6': {
-      'de': 'Group habit',
-      'en': '',
-    },
-    'h8t62zv8': {
-      'de': '08:00 AM',
-      'en': '',
-    },
-    'remy6sfh': {
-      'de': 'W',
-      'en': '',
-    },
-    'lt7vwlkb': {
-      'de': 'F',
       'en': '',
     },
   },
@@ -1501,6 +1481,167 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
   },
+  // profile_screen2
+  {
+    'f198t6i7': {
+      'de': 'My Profile',
+      'en': '',
+    },
+    'ybjjwa3s': {
+      'de': 'lazylevin123',
+      'en': '',
+    },
+    'ep1vo1mu': {
+      'de': 'Member since Apr 2025',
+      'en': '',
+    },
+    '4y54avtu': {
+      'de': 'I\'m tracking my habits and making progress every day!',
+      'en': '',
+    },
+    'ife4fo6p': {
+      'de': 'Search friends...',
+      'en': '',
+    },
+    '3t2dyqaa': {
+      'de': 'Alex Kowac',
+      'en': '',
+    },
+    'bf8hn2z6': {
+      'de': '3 mutual habits',
+      'en': '',
+    },
+    'f8hdpj7v': {
+      'de': 'Maya Johnson',
+      'en': '',
+    },
+    '8byvz6x2': {
+      'de': '5 mutual habits',
+      'en': '',
+    },
+    'anyor4ur': {
+      'de': 'Carlos Mendez',
+      'en': '',
+    },
+    'g4kmkm20': {
+      'de': '2 mutual habits',
+      'en': '',
+    },
+    'ch55tcb9': {
+      'de': 'Sarah Williams',
+      'en': '',
+    },
+    'k8a2xo1e': {
+      'de': '7 mutual habits',
+      'en': '',
+    },
+    'ie0eiug4': {
+      'de': 'Jordan Lee',
+      'en': '',
+    },
+    'gjriids5': {
+      'de': '4 mutual habits',
+      'en': '',
+    },
+  },
+  // supportScreenCopy
+  {
+    '97q2tpif': {
+      'de': 'Contact Us',
+      'en': '',
+    },
+    'edw06gyn': {
+      'de': 'Send us a message and we\'ll get back to you as soon as possible.',
+      'en': '',
+    },
+    '04cob80g': {
+      'de': 'Reason for contact',
+      'en': '',
+    },
+    'fdpxye3f': {
+      'de': '📩 Feedback',
+      'en': '',
+    },
+    'oz0q0s0o': {
+      'de': '⚠️ Report an issue',
+      'en': '',
+    },
+    '0mg7fqwk': {
+      'de': '📦 Receive personal data',
+      'en': '',
+    },
+    'a6euqu6g': {
+      'de': '🗑️ Account deletion',
+      'en': '',
+    },
+    'kh0ehgv8': {
+      'de': '➕ Other',
+      'en': '',
+    },
+    'eet7ay7h': {
+      'de': 'Your email address',
+      'en': '',
+    },
+    'q1yiytcf': {
+      'de': ' *',
+      'en': '',
+    },
+    't3lnws16': {
+      'de': 'Enter your email address',
+      'en': '',
+    },
+    'cgo5ym1b': {
+      'de': 'Your message',
+      'en': '',
+    },
+    'i6masrx6': {
+      'de': 'Tell us how we can help...',
+      'en': '',
+    },
+    '4zpr3gxa': {
+      'de': 'Send message',
+      'en': '',
+    },
+    'n1mz9efg': {
+      'de': 'Cancel',
+      'en': '',
+    },
+    'y9s10ipl': {
+      'de': 'Option 1',
+      'en': '',
+    },
+    'sljjnukb': {
+      'de': 'Option 2',
+      'en': '',
+    },
+    'g3xw0wla': {
+      'de': 'Option 3',
+      'en': '',
+    },
+  },
+  // streak_page
+  {
+    'l5hlxu8x': {
+      'de': '21',
+      'en': '',
+    },
+    '3c9f9t29': {
+      'de': 'day streak!',
+      'en': '',
+    },
+    'qcfdyz36': {
+      'de': 'You\'ve stayed consistent for 21 days – keep the momentum going!',
+      'en': '',
+    },
+    'le7oay1x': {
+      'de': 'Share',
+      'en': '',
+    },
+    'gkxdodb7': {
+      'de': 'Continue',
+      'en': '',
+    },
+  },
   // feedcard
   {
     'ltw1ki3o': {
@@ -1527,11 +1668,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
   // Friendlistitem
   {
     'jau915vf': {
-      'de': 'Alex Fitness',
-      'en': '',
-    },
-    'sg5gny08': {
-      'de': '@alexfit',
+      'de': 'Alex Kowac',
       'en': '',
     },
   },

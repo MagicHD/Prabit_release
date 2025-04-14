@@ -11,6 +11,7 @@ import '../../habit/photo/habit_photo_screen_widget.dart';
 import '../../habit/review/habit_review_screen_widget.dart';
 import '../../photo/post_screen/post_screen_widget.dart';
 import '../../profile/calender/calender_widget.dart';
+import '../../streak_page/streak_page_widget.dart';
 import '/main.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/lat_lng.dart';
@@ -207,6 +208,13 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           path: CongratsScreenWidget.routePath,
           builder: (context, params) {
             return CongratsScreenWidget();
+          },
+        ),
+        FFRoute(
+          name: StreakPageWidget.routeName,
+          path: StreakPageWidget.routePath,
+          builder: (context, params) {
+            return StreakPageWidget();
           },
         ),
         FFRoute(
