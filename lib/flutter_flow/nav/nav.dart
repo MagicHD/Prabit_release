@@ -18,6 +18,8 @@ import '/index.dart';
 
 export 'package:go_router/go_router.dart';
 export 'serialization_util.dart';
+import '../../profile/calender/calender_widget.dart';
+
 
 const kTransitionInfoKey = '__transition_info__';
 
@@ -105,9 +107,9 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                 ),
         ),
         FFRoute(
-          name: CalenderWidget.routeName,
-          path: CalenderWidget.routePath,
-          builder: (context, params) => CalenderWidget(),
+          name: CalendarWidget.routeName,
+          path: CalendarWidget.routePath,
+          builder: (context, params) => CalendarWidget(),
         ),
         FFRoute(
           name: StatistiscpageWidget.routeName,

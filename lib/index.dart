@@ -2,7 +2,7 @@
 export '/feed/feedscreen/feedscreen_widget.dart' show FeedscreenWidget;
 export '/profile/profilescreen/profilescreen_widget.dart'
     show ProfilescreenWidget;
-export '/profile/calendar/calendar_widget.dart' show CalendarWidget;
+export 'profile/calendar/calendar_widget.dart' show CalendarWidget;
 export '/nichtwichtig/statistiscpage/statistiscpage_widget.dart'
     show StatistiscpageWidget;
 export '/group/groupcreationscreen/groupcreationscreen_widget.dart'
