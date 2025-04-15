@@ -105,7 +105,7 @@ class FeedcardWidget extends StatefulWidget {
     this.userReactions,
     this.comments,
     required this.onReactButtonPressed, // Callback for react button press
-    required this.onCommentIconPressed, // Callback for comment icon press
+    required this.onCommentIconPressedWithData, // Callback for comment icon press
     required this.onProfileTap, // Callback for profile tap
     required this.onMoreOptionsTap, // Callback for more options tap
   });
@@ -122,7 +122,8 @@ class FeedcardWidget extends StatefulWidget {
   final Map<String, dynamic>? userReactions;
   final List<dynamic>? comments;
   final Function(BuildContext context, String postId, String ownerId, GlobalKey buttonKey) onReactButtonPressed;
-  final VoidCallback onCommentIconPressed;
+  final Function(String postId, String ownerId, List<dynamic> comments) onCommentIconPressedWithData; // Add this line
+
   final VoidCallback onProfileTap;
   final VoidCallback onMoreOptionsTap;
 
@@ -344,7 +345,7 @@ class _FeedcardWidgetState extends State<FeedcardWidget> {
                     Padding(
                       padding: EdgeInsetsDirectional.fromSTEB(12.0, 0.0, 0.0, 0.0), // Adjust padding
                       child: InkWell( // Make tappable
-                        onTap: widget.onCommentIconPressed, // Use callback
+                        onTap: () => widget.onCommentIconPressedWithData(widget.postId, widget.ownerId, widget.comments ?? []), // Use callback
                         borderRadius: BorderRadius.circular(16), // Match button radius
                         child: Padding( // Add padding for tap area
                           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),

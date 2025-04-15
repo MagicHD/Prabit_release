@@ -13,6 +13,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'feedscreen_model.dart';
 export 'feedscreen_model.dart';
+import "commentsBottomSheet.dart";
 
 /// The feed screen of the Prabit app features a modern, dark-themed design
 /// with a clean structure and minimalist aesthetic.
@@ -93,10 +94,7 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   String? _reactingToOwnerId;
 
   // State for interactions directly in this screen
-  final TextEditingController _commentController = TextEditingController();
-  final FocusNode _commentFocusNode = FocusNode(); // Focus node for text field
-  String? _replyingToPostId; // Track which post the comment field is for
-  Map<String, bool> _expandedComments = {}; // Track comment visibility
+  // Track comment visibility
 
 
   @override
@@ -117,8 +115,7 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   @override
   void dispose() {
     _model.dispose();
-    _commentController.dispose(); // Dispose controller
-    _commentFocusNode.dispose(); // Dispose focus node
+     // Dispose focus node
     super.dispose();
   }
 
@@ -236,13 +233,7 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
         setState(() {
           _posts = allPosts;
           // Initialize comment expansion state (only expand if few comments)
-          _posts.forEach((post) {
-            final postId = post['id'] as String;
-            final comments = post['comments'] as List<dynamic>? ?? [];
-            if (!_expandedComments.containsKey(postId)) {
-              _expandedComments[postId] = comments.length <= 3;
-            }
-          });
+
         });
       }
     } catch (e) {
@@ -403,26 +394,14 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   }
 
 
-  // Handle Add Comment
-  Future<void> _handleAddComment(String postId, String ownerId) async {
-    final commentText = _commentController.text.trim();
+  Future<void> _handleAddCommentFromSheet(String postId, String ownerId, String commentText) async {
     if (commentText.isEmpty || _currentUserId == null || _currentUserUsername == null) return;
-
-    // Dismiss keyboard
-    _commentFocusNode.unfocus();
-
-    // Clear the text field immediately for better UX
-    _commentController.clear();
-    setState(() {
-      _replyingToPostId = null; // Clear replying state
-    });
-
 
     final newComment = {
       "username": _currentUserUsername,
       "uid": _currentUserId,
       "commentText": commentText,
-      "createdAt": Timestamp.now(), // Add timestamp to comments
+      "createdAt": Timestamp.now(),
     };
 
     try {
@@ -432,56 +411,64 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
           .collection('shareWithFriendsPosts')
           .doc(postId);
 
-      // Update Firestore
       await postRef.update({
         "comments": FieldValue.arrayUnion([newComment])
       });
 
-      print("Comment added successfully!");
+      print("Comment added successfully via BottomSheet!");
 
-      // --- Update UI Immediately ---
       if (mounted) {
         setState(() {
           final postIndex = _posts.indexWhere((p) => p['id'] == postId);
           if (postIndex != -1) {
-            // Ensure comments list exists and add the new comment
             List<dynamic> currentComments = List<dynamic>.from(_posts[postIndex]['comments'] ?? []);
-            currentComments.add(newComment);
+            currentComments.add(newComment); // Add locally for feed count update
             _posts[postIndex]['comments'] = currentComments;
-
-            // Automatically expand comments if now 3 or fewer
-            if (currentComments.length <= 3) {
-              _expandedComments[postId] = true;
-            }
           }
         });
+        // Note: Sheet refresh relies on its own state management
       }
 
     } catch (e) {
-      print("Error adding comment: $e");
-      // Optionally show error to user and maybe restore text field content
-      // _commentController.text = commentText; // Restore if failed
+      print("Error adding comment from sheet: $e");
+      _showSnackbar("Failed to add comment.");
     }
   }
+
+
+  // Handle Add Comment
 
   // Toggle Comment Visibility
-  void _toggleCommentVisibility(String postId) {
-    if (mounted) {
-      setState(() {
-        _expandedComments[postId] = !(_expandedComments[postId] ?? false);
-      });
-    }
-  }
+
 
   // Handle tapping on comment icon - sets focus and remembers post ID
-  void _handleCommentIconPressed(String postId) {
-    setState(() {
-      _replyingToPostId = postId;
-    });
-    // Request focus after the state is set
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).requestFocus(_commentFocusNode);
-    });
+  void _handleCommentIconPressed(String postId, String ownerId, List<dynamic> comments) {
+    if (_currentUserId == null || _currentUserUsername == null) {
+      _showSnackbar("Please login to view comments.");
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      backgroundColor: FlutterFlowTheme.of(context).secondaryBackground, // Adjust color if needed
+      builder: (context) {
+        return CommentsBottomSheet(
+          postId: postId,
+          ownerId: ownerId,
+          comments: comments,
+          currentUserId: _currentUserId!,
+          currentUserUsername: _currentUserUsername!,
+          currentUserProfilePic: _currentUserProfilePic,
+          onCommentAdded: (String postId, String ownerId, String commentText) {
+            _handleAddCommentFromSheet(postId, ownerId, commentText);
+          },
+        );
+      },
+    );
   }
 
 
@@ -901,8 +888,7 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
                       ),
                     ),
                     // --- Comment Input Area (Conditionally Visible) ---
-                    if (_replyingToPostId != null && !_isShowingReactions) // Hide if reaction overlay is up
-                      _buildCommentInputArea(),
+
                   ],
                 ),
               ), // --- End Original Body Content ---
@@ -990,7 +976,8 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
               });
             },
             // **** MODIFICATION END ****
-            onCommentIconPressed: () => _handleCommentIconPressed(postId),
+            onCommentIconPressedWithData: (postId, ownerId, commentsList) =>
+                _handleCommentIconPressed(postId, ownerId, commentsList),
             onProfileTap: () => _handleProfileTap(ownerId),
             onMoreOptionsTap: () => _handleMoreOptionsTap(postId, ownerId),
           );
@@ -1000,58 +987,6 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   }
 
   // --- Helper Method to Build Comment Input Area ---
-  Widget _buildCommentInputArea() {
-    return Container(
-      padding: EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0, bottom: MediaQuery.of(context).viewInsets.bottom + 8.0), // Adjust bottom padding for keyboard
-      decoration: BoxDecoration(
-        color: FlutterFlowTheme.of(context).secondary, // Use a slightly different background
-        boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: Offset(0, -2)) ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _commentController,
-              focusNode: _commentFocusNode,
-              textCapitalization: TextCapitalization.sentences,
-              style: FlutterFlowTheme.of(context).bodyMedium.override(fontFamily: 'Inter', color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Add a comment...",
-                hintStyle: FlutterFlowTheme.of(context).bodyMedium.override(fontFamily: 'Inter', color: Colors.grey[500]),
-                filled: true,
-                fillColor: FlutterFlowTheme.of(context).primary, // Darker fill for text field
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                  borderSide: BorderSide.none, // No border
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                  borderSide: BorderSide(color: FlutterFlowTheme.of(context).buttonBackground, width: 1), // Highlight border on focus
-                ),
-              ),
-              onSubmitted: (text) { // Allow submission via keyboard action
-                if (_replyingToPostId != null) {
-                  _handleAddComment(_replyingToPostId!, _posts.firstWhere((p) => p['id'] == _replyingToPostId)['ownerId']);
-                }
-              },
-            ),
-          ),
-          SizedBox(width: 8),
-          IconButton(
-            icon: Icon(Icons.send, color: FlutterFlowTheme.of(context).buttonBackground),
-            onPressed: _replyingToPostId == null ? null : () { // Disable if not replying
-              _handleAddComment(_replyingToPostId!, _posts.firstWhere((p) => p['id'] == _replyingToPostId)['ownerId']);
-            },
-          ),
-        ],
-      ),
-    );
-  }
+
 
 } // End of _FeedscreenWidgetState
