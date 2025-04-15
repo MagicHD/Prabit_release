@@ -19,6 +19,8 @@ import '/flutter_flow/place.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import 'serialization_util.dart';
 
+import "../../profile/settings/privacy_policy_screen.dart";
+
 import '/index.dart';
 
 export 'package:go_router/go_router.dart';
@@ -236,6 +238,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: GroupDetailsWidget.routeName,
           path: GroupDetailsWidget.routePath,
           builder: (context, params) => GroupDetailsWidget(),
+        ),
+        FFRoute(
+          name: PrivacyPolicyScreen.routeName,
+          path: PrivacyPolicyScreen.routePath,
+          builder: (context, params) => PrivacyPolicyScreen(),
         ),
         FFRoute(
           name: StatisticsScreenWidget.routeName,

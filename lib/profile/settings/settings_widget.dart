@@ -8,6 +8,8 @@ import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'privacy_policy_screen.dart'; // Adjust path if necessary
+
 
 import 'settings_model.dart';
 export 'settings_model.dart';
@@ -348,9 +350,17 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                                 focusColor: Colors.transparent,
                                 hoverColor: Colors.transparent,
                                 highlightColor: Colors.transparent,
-                                onTap: () {
-                                  print('Privacy Policy tapped - no action defined.');
-                                },
+                                onTap: () async { // <<<--- Make it async if needed by navigation
+                                  // Navigate to the PrivacyPolicyScreen
+                                  // If using named routes and FlutterFlow router:
+                                  context.pushNamed(PrivacyPolicyScreen.routeName);
+
+                                  // Or if using standard Flutter navigation:
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                                  // );
+                                }, // <<<--- End of updated onTap
                                 child: Padding(
                                   padding: EdgeInsets.all(16),
                                   child: Row(
