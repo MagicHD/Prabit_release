@@ -283,7 +283,7 @@ class _StreakPageWidgetState extends State<StreakPageWidget> {
                                 ),
                                 child: Text( // Dynamic message
                                   _currentStreak > 0
-                                      ? "You've stayed consistent for $_currentStreak day${_currentStreak == 1 ? '' : 's'} – keep the momentum going!"
+                                      ? "You've stayed consistent for $_currentStreak day${_currentStreak == 1 ? '' : 's'}  keep the momentum going!"
                                       : "Start your streak today!",
                                   textAlign: TextAlign.center,
                                   style: FlutterFlowTheme.of(context)

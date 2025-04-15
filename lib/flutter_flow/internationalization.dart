@@ -796,7 +796,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
     'bqerj86e': {
-      'de': 'Current Streak',
+      'de': 'Streak',
       'en': '',
     },
     'ezjaph7o': {
@@ -808,7 +808,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
     'hplt8wwc': {
-      'de': 'Longest Streak',
+      'de': 'Max Streak',
       'en': '',
     },
     '43zpqv1x': {
@@ -820,7 +820,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
     'c4k56jkc': {
-      'de': 'Total Check-ins',
+      'de': 'Total Posts',
       'en': '',
     },
     'p20ker9v': {
@@ -832,7 +832,7 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'en': '',
     },
     'bwnj13gt': {
-      'de': 'Group Check-ins',
+      'de': 'Group Posts',
       'en': '',
     },
     '4hbtwclj': {
