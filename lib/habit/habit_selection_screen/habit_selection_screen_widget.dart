@@ -194,6 +194,49 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
   late TabController _tabController;
 
 
+  Future<void> _fetchStats() async {
+    // Ensure widget is still mounted before updating state
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+
+
+        _currentStreak = 0;
+
+        return; // Exit if no user
+      }
+
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        // Safely access data with null checks and type casting [cite: 1]
+        _currentStreak = (userData['streak'] as int?) ?? 0;
+
+
+
+
+
+
+
+      }
+    } catch (e) {
+      print('DEBUG: Error fetching stats: $e');
+
+
+    } finally {
+      // Ensure widget is still mounted before updating state
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+
   void _fetchHabits() async {
     setState(() => _isLoading = true);
     try {
@@ -253,9 +296,10 @@ class _HabitSelectionScreenWidgetState extends State<HabitSelectionScreenWidget>
 
     // Fetch habits when the screen is initialized
     _fetchHabits();
+    _fetchStats();
   }
 
-  int _currentStreak = 500; // Your streak variable
+  int _currentStreak = 0; // Your streak variable
 
 
   @override

@@ -118,6 +118,7 @@ flutter:
     - assets/rive_animations/
     - assets/pdfs/
     - assets/jsons/
+    - assets/images/logo.png
 
 
 
