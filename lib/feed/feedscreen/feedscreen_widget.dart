@@ -88,6 +88,10 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   String? _currentUserUsername; // Store current user's username
   String? _currentUserProfilePic; // Store current user's profile pic
 
+  bool _isShowingReactions = false;
+  String? _reactingToPostId;
+  String? _reactingToOwnerId;
+
   // State for interactions directly in this screen
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode(); // Focus node for text field
@@ -491,6 +495,87 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
     // context.push('/profileDetail', extra: {'userId': userId});
   }
 
+
+  // Add this new method inside _FeedscreenWidgetState class in feedscreen_widget.dart
+
+  // Inside _FeedscreenWidgetState class in feedscreen_widget.dart
+
+  Widget _buildReactionOverlay() {
+    // Define your reaction options
+    final reactions = {
+      'laugh': '😂',
+      'celebrate': '🎉',
+      'heart': '❤️',
+      'shocked': '😲',
+    };
+
+    return Stack(
+      children: [
+        // --- Blurred Background & Dismiss ---
+        GestureDetector(
+          onTap: () {
+            // Dismiss the overlay when tapping anywhere in the blurred area
+            setState(() {
+              _isShowingReactions = false;
+              _reactingToPostId = null;
+              _reactingToOwnerId = null;
+            });
+          },
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(
+              // **** MODIFICATION: Increased opacity for darker background ****
+              color: Colors.black.withOpacity(0.5), // Changed from 0.3 to 0.5
+              // **** END MODIFICATION ****
+            ),
+          ),
+        ),
+
+        // --- Centered Reaction Options ---
+        Center(
+          child: Material( // Wrap in Material for visual consistency (optional)
+            color: Colors.transparent, // Make Material background transparent
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 30.0),
+              decoration: BoxDecoration(
+                // Optional: Add a background to the options container if needed
+                // color: FlutterFlowTheme.of(context).secondary.withOpacity(0.8),
+                // borderRadius: BorderRadius.circular(20.0),
+              ),
+              child: Column( // Display reactions vertically
+                mainAxisSize: MainAxisSize.min, // Take minimum space needed
+                children: reactions.entries.map((entry) {
+                  final reactionType = entry.key;
+                  final emoji = entry.value;
+                  return GestureDetector(
+                    onTap: () {
+                      if (_reactingToPostId != null && _reactingToOwnerId != null) {
+                        _handleReactPost(_reactingToPostId!, _reactingToOwnerId!, reactionType);
+                      }
+                      // Hide overlay after selecting a reaction
+                      setState(() {
+                        _isShowingReactions = false;
+                        _reactingToPostId = null;
+                        _reactingToOwnerId = null;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 15.0), // Spacing between reactions
+                      child: Text(
+                        emoji,
+                        style: TextStyle(fontSize: 48), // Make emojis larger
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // --- Handle More Options Tap ---
   void _handleMoreOptionsTap(String postId, String ownerId) {
     print("More options tapped for post: $postId by $ownerId");
@@ -647,16 +732,21 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
   // --- Widget Build Method ---
   @override
   Widget build(BuildContext context) {
+    // Main GestureDetector to handle unfocusing, but allows taps on the overlay
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
+        // Only unfocus if the reaction overlay isn't showing
+        if (!_isShowingReactions) {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        }
+        // If reactions are showing, tapping outside is handled by the overlay's GestureDetector
       },
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primary,
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(30),
+          preferredSize: Size.fromHeight(30), // Original AppBar height
           child: AppBar(
             backgroundColor: FlutterFlowTheme.of(context).primary,
             automaticallyImplyLeading: false,
@@ -690,121 +780,137 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
                       color: FlutterFlowTheme.of(context).primaryText,
                       size: 24,
                     ),
-                  ].divide(SizedBox(width: 230)),
+                  ].divide(SizedBox(width: 230)), // Original spacing
                 ),
               ),
               centerTitle: false,
               expandedTitleScale: 1.0,
             ),
-            elevation: 4,
+            elevation: 4, // Original elevation
           ),
         ),
         body: SafeArea(
           top: true,
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).primary,
-            ),
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment(0, 0),
-                  child: TabBar(
-                    labelColor: FlutterFlowTheme.of(context).primaryText,
-                    unselectedLabelColor:
-                    FlutterFlowTheme.of(context).secondaryText,
-                    labelStyle: FlutterFlowTheme.of(context)
-                        .titleLarge
-                        .override(
-                      fontFamily:
-                      FlutterFlowTheme.of(context).titleLargeFamily,
-                      letterSpacing: 0.0,
-                      useGoogleFonts: GoogleFonts.asMap().containsKey(
-                          FlutterFlowTheme.of(context).titleLargeFamily),
-                    ),
-                    unselectedLabelStyle: FlutterFlowTheme.of(context)
-                        .titleMedium
-                        .override(
-                      fontFamily:
-                      FlutterFlowTheme.of(context).titleMediumFamily,
-                      letterSpacing: 0.0,
-                      useGoogleFonts: GoogleFonts.asMap().containsKey(
-                          FlutterFlowTheme.of(context).titleMediumFamily),
-                    ),
-                    indicatorColor:
-                    FlutterFlowTheme.of(context).buttonBackground,
-                    indicatorWeight: 3.5,
-                    tabs: [
-                      Tab(
-                        text: FFLocalizations.of(context).getText(
-                          '40uc9yol' /* Friends */,
-                        ),
-                      ),
-                      Tab(
-                        text: FFLocalizations.of(context).getText(
-                          '9sgbuu77' /* Discover */,
-                        ),
-                      ),
-                    ],
-                    controller: _model.tabBarController,
-                    onTap: (i) async {
-                      [() async {}, () async {}][i]();
-                    },
-                  ),
+          // Use Stack to layer the reaction overlay on top of the feed
+          child: Stack(
+            children: [
+              // --- Original Body Content (Feed View) ---
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).primary,
                 ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _model.tabBarController,
-                    children: [
-                      // --- Friends Tab Content ---
-                      _buildFriendsFeed(), // Use helper method for feed content
-
-                      // --- Friends of Friends Tab Content ---
-                      Column( // Keep placeholder
-                        mainAxisAlignment: MainAxisAlignment.center, // Center content
-                        children: [
-                          Icon(
-                            Icons.lock_outline,
-                            color: FlutterFlowTheme.of(context).secondaryText, // Use secondary text color
-                            size: 60.0,
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(0.0, 15.0, 0.0, 10.0), // Adjust padding
-                            child: Text(
-                              'Coming Soon',
-                              textAlign: TextAlign.center,
-                              style: FlutterFlowTheme.of(context).headlineMedium.override( // Use medium headline
-                                fontFamily: 'Inter Tight',
-                                color: FlutterFlowTheme.of(context).primaryText,
-                                letterSpacing: 0.0,
-                              ),
+                child: Column(
+                  children: [
+                    // --- TabBar ---
+                    Align(
+                      alignment: Alignment(0, 0),
+                      child: TabBar(
+                        labelColor: FlutterFlowTheme.of(context).primaryText,
+                        unselectedLabelColor:
+                        FlutterFlowTheme.of(context).secondaryText,
+                        labelStyle: FlutterFlowTheme.of(context)
+                            .titleLarge
+                            .override(
+                          fontFamily:
+                          FlutterFlowTheme.of(context).titleLargeFamily,
+                          letterSpacing: 0.0,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context).titleLargeFamily),
+                        ),
+                        unselectedLabelStyle: FlutterFlowTheme.of(context)
+                            .titleMedium
+                            .override(
+                          fontFamily:
+                          FlutterFlowTheme.of(context).titleMediumFamily,
+                          letterSpacing: 0.0,
+                          useGoogleFonts: GoogleFonts.asMap().containsKey(
+                              FlutterFlowTheme.of(context).titleMediumFamily),
+                        ),
+                        indicatorColor:
+                        FlutterFlowTheme.of(context).buttonBackground,
+                        indicatorWeight: 3.5,
+                        tabs: [
+                          Tab(
+                            text: FFLocalizations.of(context).getText(
+                              '40uc9yol' /* Friends */,
                             ),
                           ),
-                          Padding( // Add padding for better spacing
-                            padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                            child: Text(
-                              'This feature will be available in an upcoming update.',
-                              textAlign: TextAlign.center,
-                              style: FlutterFlowTheme.of(context).bodyMedium.override( // Use medium body
-                                fontFamily: 'Inter',
-                                color: FlutterFlowTheme.of(context).secondaryText, // Use secondary text color
-                                // fontSize: 15.0, // Font size from theme is usually sufficient
-                                letterSpacing: 0.0,
-                              ),
+                          Tab(
+                            text: FFLocalizations.of(context).getText(
+                              '9sgbuu77' /* Discover */,
                             ),
                           ),
                         ],
+                        controller: _model.tabBarController,
+                        onTap: (i) async {
+                          // Prevent tab switching if overlay is shown
+                          if (!_isShowingReactions) {
+                            [() async {}, () async {}][i]();
+                          }
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                    // --- TabBarView ---
+                    Expanded(
+                      child: TabBarView(
+                        controller: _model.tabBarController,
+                        // Disable swiping between tabs when the reaction overlay is visible
+                        physics: _isShowingReactions ? NeverScrollableScrollPhysics() : null,
+                        children: [
+                          // --- Friends Tab Content ---
+                          _buildFriendsFeed(), // Your feed content builder
+
+                          // --- Discover Tab Content (Placeholder) ---
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline,
+                                color: FlutterFlowTheme.of(context).secondaryText,
+                                size: 60.0,
+                              ),
+                              Padding(
+                                padding: EdgeInsetsDirectional.fromSTEB(0.0, 15.0, 0.0, 10.0),
+                                child: Text(
+                                  'Coming Soon',
+                                  textAlign: TextAlign.center,
+                                  style: FlutterFlowTheme.of(context).headlineMedium.override(
+                                    fontFamily: 'Inter Tight',
+                                    color: FlutterFlowTheme.of(context).primaryText,
+                                    letterSpacing: 0.0,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                                child: Text(
+                                  'This feature will be available in an upcoming update.',
+                                  textAlign: TextAlign.center,
+                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                    fontFamily: 'Inter',
+                                    color: FlutterFlowTheme.of(context).secondaryText,
+                                    letterSpacing: 0.0,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // --- Comment Input Area (Conditionally Visible) ---
+                    if (_replyingToPostId != null && !_isShowingReactions) // Hide if reaction overlay is up
+                      _buildCommentInputArea(),
+                  ],
                 ),
-                // --- Comment Input Area (Appears when replying) ---
-                if (_replyingToPostId != null)
-                  _buildCommentInputArea(),
-              ],
-            ),
+              ), // --- End Original Body Content ---
+
+              // --- Reaction Overlay (Conditionally Visible on Top) ---
+              if (_isShowingReactions)
+                _buildReactionOverlay(), // The overlay widget you created
+            ],
           ),
         ),
       ),
@@ -875,8 +981,16 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
             userReactions: userReactions,
             comments: comments,
             // Pass interaction callbacks
-            onReactButtonPressed: _showReactionPicker,
-            onCommentIconPressed: () => _handleCommentIconPressed(postId), // Pass handler for comment icon
+            onReactButtonPressed: (BuildContext context, String postId, String ownerId, GlobalKey buttonKey) {
+              // Don't need context or buttonKey for the new implementation
+              setState(() {
+                _isShowingReactions = true;
+                _reactingToPostId = postId;
+                _reactingToOwnerId = ownerId;
+              });
+            },
+            // **** MODIFICATION END ****
+            onCommentIconPressed: () => _handleCommentIconPressed(postId),
             onProfileTap: () => _handleProfileTap(ownerId),
             onMoreOptionsTap: () => _handleMoreOptionsTap(postId, ownerId),
           );
