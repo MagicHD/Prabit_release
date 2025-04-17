@@ -76,8 +76,11 @@ class _HabitPhotoScreenWidgetState extends State<HabitPhotoScreenWidget> with Wi
 
       // Find rear camera
       final rearCamera = cameras!.firstWhere(
-            (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras!.first, // Fallback to first camera if no specific back camera
+            (camera) => camera.lensDirection == CameraLensDirection.back  ,
+        orElse: () {
+          print("Warning: No front camera found, using rear camera for both.");
+          return cameras!.first; // Fallback to first camera if no specific back camera
+        }
       );
 
       // Find front camera
@@ -169,59 +172,181 @@ class _HabitPhotoScreenWidgetState extends State<HabitPhotoScreenWidget> with Wi
     });
   }
 
+// In lib/habit/photo/habit_photo_screen_widget.dart
 
   // In lib/habit/photo/habit_photo_screen_widget.dart
 
-  // --- TEMPORARY TEST 1: REAR ONLY ---
+  // In lib/habit/photo/habit_photo_screen_widget.dart
+
+
+// --- Add this method inside your _HabitPhotoScreenWidgetState class ---
+
   Future<void> _capturePhotos() async {
-    if (_isCapturing || !_camerasInitialized || _rearController == null) return;
+    // Initial checks for readiness (include front controller check here now)
+    if (_isCapturing ||
+        !_camerasInitialized ||
+        _frontController == null || // Need front controller first
+        !_frontController!.value.isInitialized ||
+        _rearController == null ||  // Also ensure rear controller is available
+        !_rearController!.value.isInitialized)
+    {
+      print("Capture conditions not met (capturing: $_isCapturing, initialized: $_camerasInitialized, front ready: ${_frontController?.value.isInitialized}, rear ready: ${_rearController?.value.isInitialized})");
+      if (!_camerasInitialized && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Camera not ready.')));
+      }
+      if (_isCapturing && mounted) setState(() => _isCapturing = false); // Reset if needed
+      return;
+    }
 
     setState(() { _isCapturing = true; });
-    print(">>> TEST 1: REAR ONLY - Starting capture...");
-    _rearImageFile = null; // Clear any previous
+    print("Starting photo capture sequence (FRONT first)...");
+
+    // Clear previous temporary file references
+    _rearImageFile = null;
     _frontImageFile = null;
+    String? persistentFrontPath; // Paths for successfully saved persistent files
+    String? persistentRearPath;
+    bool frontSaveOk = false; // Track individual save success
+    bool rearSaveOk = false;
 
     try {
-      if (_rearController!.value.isTakingPicture) {
-        print(">>> TEST 1: Rear controller busy.");
-        setState(() { _isCapturing = false; }); return;
-      }
-      print(">>> TEST 1: Attempting REAR capture (ID: ${_rearController?.description.name})");
-      _rearImageFile = await _rearController!.takePicture();
-      print(">>> TEST 1: Rear capture complete. Path: ${_rearImageFile?.path}");
+      // --- 1. Capture Front Photo ---
+      print(">>> CAPTURE DEBUG: Attempting to take picture with FRONT controller (ID: ${_frontController?.description.name})");
+      _frontImageFile = await _frontController!.takePicture();
+      print(">>> POST CAPTURE CHECK: Front file is ${_frontImageFile == null ? 'NULL' : 'VALID'}. Path: ${_frontImageFile?.path}");
 
-      if (_rearImageFile != null) {
-        print(">>> TEST 1: Rear image valid. Saving for inspection.");
-        // Save it with a specific name to check later
-        final tempDir = await getTemporaryDirectory();
-        final debugPath = '${tempDir.path}/TEST_REAR_ONLY_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        await File(_rearImageFile!.path).copy(debugPath);
-        print(">>> TEST 1: Saved rear-only test image to: $debugPath");
+      // --- 2. Save Front Photo Persistently ---
+      if (_frontImageFile != null) {
+        try {
+          final Directory docsDir = await getApplicationDocumentsDirectory();
+          final String docsDirPath = docsDir.path;
+          final timestamp = DateTime.now().millisecondsSinceEpoch; // Use separate timestamps now
+          final String sourceFrontPath = _frontImageFile!.path;
+          persistentFrontPath = '$docsDirPath/X_habit_front_$timestamp.jpg'; // Define persistent path
 
-        // Show a success message and maybe pop back? Or navigate to review with only one image?
-        // For now, just show success and allow manual closing/retrying.
-        if(mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Rear capture saved to $debugPath')));
+          print("Attempting to save FRONT original:");
+          print("  Source (temp): $sourceFrontPath");
+          print("  Destination (persistent): $persistentFrontPath");
+
+          final sourceFrontFile = File(sourceFrontPath);
+          if (await sourceFrontFile.exists()) {
+            print("  Source front file exists, attempting copy...");
+            await sourceFrontFile.copy(persistentFrontPath!);
+            if (await File(persistentFrontPath).exists()) {
+              print("  SUCCESS: Saved persistent front photo to: $persistentFrontPath");
+              frontSaveOk = true;
+            } else { print("  ERROR: Destination front file does NOT exist after copy attempt!"); }
+          } else { print("  ERROR: Source front file does NOT exist before copy!"); }
+        } catch(e) {
+          print("🚨 Error saving persistent FRONT original: $e");
+          // frontSaveOk remains false
         }
-
       } else {
-        print(">>> TEST 1: Rear capture failed silently (file is null).");
-        if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Rear capture failed.'))); }
+        print("Skipping front save because capture result was null.");
       }
 
-    } catch (e) {
-      print(">>> TEST 1: Error during rear capture: $e");
-      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('TEST 1: Error: ${e.toString()}'))); }
-    } finally {
+      // --- 3. Capture Rear Photo ---
+      // Proceed only if front capture was obtained (even if save failed, maybe still try rear?)
+      // Let's proceed to capture rear even if front save failed, but navigation will depend on both saves.
+      if (_frontImageFile != null) { // Check if front *capture* was successful
+        await Future.delayed(const Duration(milliseconds: 100)); // Brief pause
+
+        print(">>> CAPTURE DEBUG: Attempting to take picture with REAR controller (ID: ${_rearController?.description.name})");
+        _rearImageFile = await _rearController!.takePicture();
+        print(">>> POST CAPTURE CHECK: Rear file is ${_rearImageFile == null ? 'NULL' : 'VALID'}. Path: ${_rearImageFile?.path}");
+
+        // --- 4. Save Rear Photo Persistently ---
+        if (_rearImageFile != null) {
+          try {
+            final Directory docsDir = await getApplicationDocumentsDirectory();
+            final String docsDirPath = docsDir.path;
+            final timestamp = DateTime.now().millisecondsSinceEpoch; // Separate timestamp
+            final String sourceRearPath = _rearImageFile!.path;
+            persistentRearPath = '$docsDirPath/X_habit_rear_$timestamp.jpg'; // Define persistent path
+
+            print("Attempting to save REAR original:");
+            print("  Source (temp): $sourceRearPath");
+            print("  Destination (persistent): $persistentRearPath");
+
+            final sourceRearFile = File(sourceRearPath);
+            if (await sourceRearFile.exists()) {
+              print("  Source rear file exists, attempting copy...");
+              await sourceRearFile.copy(persistentRearPath!);
+              if (await File(persistentRearPath).exists()) {
+                print("  SUCCESS: Saved persistent rear photo to: $persistentRearPath");
+                rearSaveOk = true;
+              } else { print("  ERROR: Destination rear file does NOT exist after copy attempt!"); }
+            } else { print("  ERROR: Source rear file does NOT exist before copy!"); }
+          } catch (e) {
+            print("🚨 Error saving persistent REAR original: $e");
+            // rearSaveOk remains false
+          }
+        } else {
+          print("Skipping rear save because capture result was null.");
+        }
+      } else {
+        print("Skipping rear capture because front capture failed.");
+      }
+
+
+      // --- 5. Navigate only if BOTH saves were successful ---
+      if (rearSaveOk && frontSaveOk && persistentRearPath != null && persistentFrontPath != null) {
+        print("Both originals captured and saved persistently, proceeding to Review Screen.");
+        if (mounted) {
+          final result = await context.pushNamed<bool>(
+            HabitReviewScreenWidget.routeName,
+            extra: {
+              // Pass the persistent paths
+              'rearImagePath': persistentRearPath,
+              'frontImagePath': persistentFrontPath,
+              'habit': widget.habit,
+            },
+          );
+          // Handle retake result
+          if (result == true && mounted) {
+            print("Retake requested from Review Screen. Resetting capture state.");
+            setState(() { _rearImageFile = null; _frontImageFile = null; _isCapturing = false; _countdownValue = 5; });
+            _startCountdown();
+          } else if (mounted) {
+            print("Review screen finished/popped.");
+            if (context.canPop()) context.pop();
+            setState(() => _isCapturing = false);
+          }
+        } else {
+          // mounted is false after await
+          _isCapturing = false;
+        }
+      } else {
+        // If one or both saves failed or captures failed
+        print("Error: Capture or save process incomplete. Front Save OK: $frontSaveOk, Rear Save OK: $rearSaveOk");
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error capturing or saving photos.')));
+          setState(() { _isCapturing = false; }); // Allow retry
+        }
+      }
+
+    } on CameraException catch (e) {
+      print('CameraException during capture: ${e.code} - ${e.description}');
       if (mounted) {
-        setState(() { _isCapturing = false; }); // Allow trying again or closing
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Camera error: ${e.description ?? e.code}')));
+        setState(() { _isCapturing = false; });
+      }
+    } catch (e) {
+      print('Unexpected error during photo capture process: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')));
+        setState(() { _isCapturing = false; });
+      }
+    } finally {
+      // Ensure capturing state is reset if it's still true and we are mounted
+      // (Should be handled by specific paths, but as a safeguard)
+      if (mounted && _isCapturing) {
+        print("Capture process finished (finally block). Resetting capturing state if needed.");
+        // setState(() => _isCapturing = false); // Let specific paths handle it now
       }
     }
-  }
-  // --- END TEMPORARY TEST 1 ---
+  } // End _capturePhotos
 
-  // --- Make sure _mergeAndNavigate is commented out or removed ---
-  // Future<void> _mergeAndNavigate() async { ... }apturePhotos
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
