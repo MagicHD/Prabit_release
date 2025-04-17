@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../flutter_flow/flutter_flow_icon_button.dart';
 import '/feed/feedcard/feedcard_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -156,11 +157,11 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
     try {
       List<Map<String, dynamic>> allPosts = [];
 
-      // Fetch user's own posts
+      // --- Fetch user's own posts ---
       final userPostsSnapshot = await _firestore
           .collection('users')
           .doc(_currentUserId)
-          .collection('shareWithFriendsPosts') // Collection name from home_friendsTab
+          .collection('shareWithFriendsPosts')
           .orderBy('createdAt', descending: true)
           .get();
 
@@ -168,24 +169,27 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
         final postData = post.data();
         allPosts.add({
           "id": post.id,
-          'username': _currentUserUsername, // Use fetched username
+          'username': _currentUserUsername,
           "ownerId": _currentUserId,
-          "profilePictureUrl": _currentUserProfilePic, // Use fetched profile pic
-          "imageUrl": postData['url'], // Map Firestore field 'url'
+          "profilePictureUrl": _currentUserProfilePic,
+          "imageUrl": postData['url'],
           "caption": postData['caption'],
           "createdAt": postData['createdAt'],
           "reactions": postData['reactions'] as Map<String, dynamic>? ?? {},
           "userReactions": postData['userReactions'] as Map<String, dynamic>? ?? {},
           "comments": postData['comments'] as List<dynamic>? ?? [],
-          // Add any other needed fields
+          // **** ADD THESE TWO LINES for user's own posts ****
+          "habitIcon": postData['habitIcon'] as String?, // Fetches the icon name string
+          "habitName": postData['habitName'] as String?, // Fetches the habit name string
+          // **** END ADDED LINES ****
         });
       }
 
-      // Fetch friends' posts
+      // --- Fetch friends' posts ---
       final friendsSnapshot = await _firestore
           .collection('users')
           .doc(_currentUserId)
-          .collection('addedFriends') // Collection name from home_friendsTab
+          .collection('addedFriends')
           .get();
       List<String> friendIds = friendsSnapshot.docs.map((doc) => doc.id).toList();
 
@@ -216,7 +220,10 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
               "reactions": postData['reactions'] as Map<String, dynamic>? ?? {},
               "userReactions": postData['userReactions'] as Map<String, dynamic>? ?? {},
               "comments": postData['comments'] as List<dynamic>? ?? [],
-              // Add any other needed fields
+              // **** ADD THESE TWO LINES for friends' posts ****
+              "habitIcon": postData['habitIcon'] as String?, // Fetches the icon name string
+              "habitName": postData['habitName'] as String?, // Fetches the habit name string
+              // **** END ADDED LINES ****
             });
           }
         }
@@ -732,49 +739,44 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primary,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(30), // Original AppBar height
-          child: AppBar(
-            backgroundColor: FlutterFlowTheme.of(context).primary,
-            automaticallyImplyLeading: false,
-            actions: [],
-            flexibleSpace: FlexibleSpaceBar(
-              title: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 5),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
-                      child: Text(
-                        FFLocalizations.of(context).getText(
-                          'j2028ukr' /* Prabit */,
-                        ),
-                        style:
-                        FlutterFlowTheme.of(context).displaySmall.override(
-                          fontFamily: FlutterFlowTheme.of(context)
-                              .displaySmallFamily,
-                          letterSpacing: 0.0,
-                          useGoogleFonts: GoogleFonts.asMap()
-                              .containsKey(FlutterFlowTheme.of(context)
-                              .displaySmallFamily),
-                        ),
-                      ),
-                    ),
-                    FaIcon(
-                      FontAwesomeIcons.solidBell,
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      size: 24,
-                    ),
-                  ].divide(SizedBox(width: 230)), // Original spacing
+        appBar:
+        // Generated code for this AppBar Widget...
+        AppBar(
+          backgroundColor: FlutterFlowTheme.of(context).primary,
+          automaticallyImplyLeading: false,
+          title: Text(
+            FFLocalizations.of(context).getText(
+              'j2028ukr' /* Prabit */,
+            ),
+            style: FlutterFlowTheme.of(context).displaySmall.override(
+              fontFamily: FlutterFlowTheme.of(context).displaySmallFamily,
+              letterSpacing: 0.0,
+              useGoogleFonts: GoogleFonts.asMap()
+                  .containsKey(FlutterFlowTheme.of(context).displaySmallFamily),
+            ),
+          ),
+          actions: [
+            Align(
+              alignment: AlignmentDirectional(0, 0),
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
+                child: FlutterFlowIconButton(
+                  borderRadius: 40,
+                  buttonSize: 40,
+                  icon: Icon(
+                    FontAwesomeIcons.solidBell,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  onPressed: () {
+                    print('IconButton pressed ...');
+                  },
                 ),
               ),
-              centerTitle: false,
-              expandedTitleScale: 1.0,
             ),
-            elevation: 4, // Original elevation
-          ),
+          ],
+          centerTitle: false,
+          elevation: 0,
         ),
         body: SafeArea(
           top: true,
@@ -938,7 +940,7 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
       color: FlutterFlowTheme.of(context).buttonBackground,
       backgroundColor: FlutterFlowTheme.of(context).primary,
       child: ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0), // Add padding around list
+        padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 16.0), // Add padding around list
         itemCount: _posts.length,
         itemBuilder: (context, index) {
           final post = _posts[index];
@@ -953,6 +955,9 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
           final reactions = post['reactions'] as Map<String, dynamic>? ?? {};
           final userReactions = post['userReactions'] as Map<String, dynamic>? ?? {};
           final comments = post['comments'] as List<dynamic>? ?? [];
+          // **** ADD THESE TWO LINES to extract the data ****
+          final habitIcon = post['habitIcon'] as String?;
+          final habitName = post['habitName'] as String?;
 
           return FeedcardWidget(
             key: ValueKey(postId), // Use post ID as key
@@ -966,6 +971,10 @@ class _FeedscreenWidgetState extends State<FeedscreenWidget>
             reactions: reactions,
             userReactions: userReactions,
             comments: comments,
+            // **** ADD THESE TWO PARAMETERS ****
+            habitIcon: habitIcon, // Pass the icon name string
+            habitName: habitName, // Pass the habit name string
+            // **** END ADDED PARAMETERS ****
             // Pass interaction callbacks
             onReactButtonPressed: (BuildContext context, String postId, String ownerId, GlobalKey buttonKey) {
               // Don't need context or buttonKey for the new implementation

@@ -243,6 +243,7 @@ class _HabitPostScreenWidgetState extends State<HabitPostScreenWidget> {
         'url': downloadURL,
         'habitId': widget.habit!['id'], // Store habit ID
         'habitName': widget.habit!['name'], // Store habit name
+        'habitIcon': widget.habit!['iconStringName'] as String?, // <-- Get the icon STRING from the habit definition data
         'caption': _model.textController.text.trim(),
         'createdAt': FieldValue.serverTimestamp(),
         'reactions': {}, // Initialize reactions map
