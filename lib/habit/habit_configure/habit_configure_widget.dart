@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../custom_picker_widget.dart';
 import '../icon/icon_picker_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -420,33 +421,28 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                         ),
                         // Wrap the Container with GestureDetector to make it tappable
                         GestureDetector(
+                          // Inside habit_configure_widget.dart, replace the onTap for the time GestureDetector:
                           onTap: () async {
-                            // Show Flutter's built-in time picker
-                            final TimeOfDay? picked = await showTimePicker(
+                            // Determine initial time for the custom picker
+                            final currentTimeOfDay = _model.selectedTime != null
+                                ? TimeOfDay.fromDateTime(_model.selectedTime!)
+                                : TimeOfDay.now(); // Or a default like TimeOfDay(hour: 8, minute: 0)
+
+                            // Show the custom dialog
+                            final TimeOfDay? picked = await showDialog<TimeOfDay?>(
                               context: context,
-                              initialTime: _model.selectedTime != null
-                                  ? TimeOfDay.fromDateTime(_model.selectedTime!)
-                                  : TimeOfDay(hour: 8, minute: 0), // Default to 8:00 AM or current time
-                              // Optional: You can add builder for theming the picker itself
-                              // builder: (context, child) {
-                              //   return Theme(
-                              //     data: Theme.of(context).copyWith(
-                              //       // Customize picker colors here if needed
-                              //       colorScheme: Theme.of(context).colorScheme.copyWith(
-                              //         primary: FlutterFlowTheme.of(context).primary,
-                              //         onPrimary: FlutterFlowTheme.of(context).info,
-                              //       ),
-                              //     ),
-                              //     child: child!,
-                              //   );
-                              // },
+                              builder: (dialogContext) {
+                                return CustomTimePickerPopup(
+                                  initialTime: currentTimeOfDay,
+                                );
+                              },
                             );
 
-                            // If the user picked a time, update the state
+                            // If the user picked a time (didn't cancel)
                             if (picked != null) {
                               final now = DateTime.now();
                               setState(() {
-                                // Update the model's selectedTime state variable
+                                // Update the model's selectedTime (which is DateTime?)
                                 _model.selectedTime = DateTime(
                                   now.year,
                                   now.month,
@@ -456,15 +452,11 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                                 );
                               });
                             }
-                            // If you enabled 'Allow Clear' in a FlutterFlow action,
-                            // you might get a null result here, signifying clear.
-                            // Handle clearing the _model.selectedTime if necessary:
+                            // Handle potential clearing if needed (if your dialog could return a specific value for clear)
                             // else {
-                            //   setState(() {
-                            //     _model.selectedTime = null;
-                            //   });
+                            //   setState(() { _model.selectedTime = null; });
                             // }
-                          },
+                          }, // End of onTap
                           child: Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
