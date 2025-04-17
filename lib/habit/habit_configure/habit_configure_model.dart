@@ -17,6 +17,7 @@ class HabitConfigureModel extends FlutterFlowModel<HabitConfigureWidget> {
   FocusNode? textFieldFocusNode;
   TextEditingController? textController;
   String? Function(BuildContext, String?)? textControllerValidator;
+  IconData? selectedIcon;
 
   // State for selected Time (using FlutterFlow's DateTime)
   DateTime? selectedTime; // FlutterFlow often uses DateTime for time pickers
@@ -36,8 +37,9 @@ class HabitConfigureModel extends FlutterFlowModel<HabitConfigureWidget> {
   };
 
   // State for selected Icon (Store IconData)
-  IconData? selectedIcon = FontAwesomeIcons.faceSmile; // Default Icon
-
+  // **** ADD THIS FIELD ****
+  String? selectedIconStringName; // To store 'sports_soccer', 'book', etc.
+  // **** END ADDED FIELD ****
   // State for selected Color (Store Color)
   Color? selectedColor = Color(0xFFFFD700);
 

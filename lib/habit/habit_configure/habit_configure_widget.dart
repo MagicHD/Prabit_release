@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../icon/icon_picker_widget.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -1122,6 +1123,8 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                       mainAxisSize: MainAxisSize.max,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Inside the build method, within the Column for the 'Icon' section:
+
                         Column(
                           mainAxisSize: MainAxisSize.max,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,92 +1136,140 @@ class _HabitConfigureWidgetState extends State<HabitConfigureWidget> {
                               style: FlutterFlowTheme.of(context)
                                   .titleLarge
                                   .override(
-                                    fontFamily: FlutterFlowTheme.of(context)
-                                        .titleLargeFamily,
-                                    letterSpacing: 0.0,
-                                    useGoogleFonts: GoogleFonts.asMap()
-                                        .containsKey(
-                                            FlutterFlowTheme.of(context)
-                                                .titleLargeFamily),
-                                  ),
-                            ),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: FlutterFlowTheme.of(context).secondary,
-                                borderRadius: BorderRadius.circular(12.0),
-                                border: Border.all(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBordercolor,
-                                  width: 1.0,
-                                ),
+                                fontFamily: FlutterFlowTheme.of(context)
+                                    .titleLargeFamily,
+                                letterSpacing: 0.0,
+                                useGoogleFonts: GoogleFonts.asMap()
+                                    .containsKey(
+                                    FlutterFlowTheme.of(context)
+                                        .titleLargeFamily),
                               ),
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Container(
-                                          width: 40.0,
-                                          height: 40.0,
-                                          decoration: BoxDecoration(
-                                            color: FlutterFlowTheme.of(context)
-                                                .buttonBackground,
-                                            borderRadius:
-                                                BorderRadius.circular(8.0),
-                                          ),
-                                          child: Align(
-                                            alignment:
-                                                AlignmentDirectional(0.0, 0.0),
-                                            child: Icon(
-                                              Icons.self_improvement,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .info,
-                                              size: 24.0,
+                            ),
+                            // Wrap the Container with GestureDetector
+                            GestureDetector(
+                              // Inside habit_configure_widget.dart, replace the onTap content:
+                              // Inside habit_configure_widget.dart, replace the onTap content:
+                              onTap: () async {
+                                // Show IconPickerWidget in a Dialog
+                                final selectedIconResult = await showDialog<IconData?>( // Or String? if returning ID
+                                  context: context,
+                                  builder: (dialogContext) {
+                                    // Return a Dialog widget containing your IconPickerWidget
+                                    return Dialog(
+                                      // Optional: Adjust shape, background color, padding etc.
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20.0),
+                                      ),
+                                      // You might need to constrain the size of the Dialog
+                                      // or adjust the IconPickerWidget layout significantly.
+                                      child: IconPickerWidget(
+                                        currentlySelectedId: _model.selectedIcon?.toString(), // Pass current selection if needed
+                                        // Note: Adjust type based on what you store/compare
+                                      ),
+                                    );
+                                  },
+                                );
+
+                                // If an icon was selected and returned, update the state
+                                if (selectedIconResult != null) {
+                                  // --- Keep your existing logic for handling the result ---
+                                  // Make sure the type matches what IconPickerWidget returns via Navigator.pop()
+                                  // Example if IconData is returned:
+                                  setState(() {
+                                    _model.selectedIcon = selectedIconResult;
+                                  });
+                                  // Example if String ID is returned:
+                                  // setState(() {
+                                  //   _model.selectedIconId = selectedIconResult;
+                                  //   // Add logic to find IconData from ID if needed
+                                  // });
+                                }
+                              }, // End of onTapf onTap
+                              child: Container( // This is the original container for the button
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: FlutterFlowTheme.of(context).secondary,
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  border: Border.all(
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryBordercolor,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Container(
+                                            width: 40.0,
+                                            height: 40.0,
+                                            decoration: BoxDecoration(
+                                              color: _model.selectedColor ?? FlutterFlowTheme.of(context).buttonBackground, // Use selected color for consistency?
+                                              borderRadius:
+                                              BorderRadius.circular(8.0),
+                                            ),
+                                            child: Align(
+                                              alignment:
+                                              AlignmentDirectional(0.0, 0.0),
+                                              // Display selected icon or default
+                                              child: Icon(
+                                                _model.selectedIcon ?? Icons.add_reaction_outlined, // Show selected icon or a default placeholder
+                                                color:
+                                                FlutterFlowTheme.of(context)
+                                                    .info,
+                                                size: 24.0,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        Text(
-                                          FFLocalizations.of(context).getText(
-                                            '5sq430y4' /* Select Icon */,
+                                          Text(
+                                            // Change text if an icon is selected
+                                            _model.selectedIcon != null
+                                                ? 'Icon Selected' // Or display icon name if available
+                                                : FFLocalizations.of(context).getText(
+                                              '5sq430y4' /* Select Icon */,
+                                            ),
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodyMedium
+                                                .override(
+                                              fontFamily:
+                                              FlutterFlowTheme.of(context)
+                                                  .bodyMediumFamily,
+                                              color:
+                                              FlutterFlowTheme.of(context)
+                                                  .info,
+                                              letterSpacing: 0.0,
+                                              useGoogleFonts: GoogleFonts
+                                                  .asMap()
+                                                  .containsKey(
+                                                  FlutterFlowTheme.of(
+                                                      context)
+                                                      .bodyMediumFamily),
+                                            ),
                                           ),
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodyMedium
-                                              .override(
-                                                fontFamily:
-                                                    FlutterFlowTheme.of(context)
-                                                        .bodyMediumFamily,
-                                                color:
-                                                    FlutterFlowTheme.of(context)
-                                                        .info,
-                                                letterSpacing: 0.0,
-                                                useGoogleFonts: GoogleFonts
-                                                        .asMap()
-                                                    .containsKey(
-                                                        FlutterFlowTheme.of(
-                                                                context)
-                                                            .bodyMediumFamily),
-                                              ),
-                                        ),
-                                      ].divide(SizedBox(width: 16.0)),
-                                    ),
-                                    Icon(
-                                      Icons.keyboard_arrow_right,
-                                      color: Colors.white,
-                                      size: 24.0,
-                                    ),
-                                  ],
+                                        ].divide(SizedBox(width: 16.0)),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_arrow_right,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ].divide(SizedBox(height: 16.0)),
-                        ),
+                        ), // End of Icon Column
+
+// Make sure your IconPickerWidget returns the selected IconData like this:
+// In IconPickerWidget, when an icon is tapped:
+// Navigator.pop(context, selectedIconData); // e.g., Navigator.pop(context, Icons.fitness_center);
                         Text(
                           FFLocalizations.of(context).getText(
                             'duoeg3ai' /* Category */,
