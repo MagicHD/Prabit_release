@@ -1926,5 +1926,13 @@ final kTranslationsMap = <Map<String, Map<String, String>>>[
       'de': '',
       'en': '',
     },
+    'settingsLanguageSectionHeader': { // This is the key name
+      'de': 'SPRACHE',              // German text for the header
+      'en': 'LANGUAGE',             // English text for the header
+    }, // <--- IMPORTANT: Add a comma here if more keys follow in this map
+    'settingsLanguageRowLabel': { // This is the second key name
+      'de': 'Sprache',              // German text for the row label
+      'en': 'Language',             // English text for the row label
+    }, // <--- IMPORTANT: Add a comma if more keys follow, otherwise no comma if it's the last entry in this map {}
   },
 ].reduce((a, b) => a..addAll(b));
