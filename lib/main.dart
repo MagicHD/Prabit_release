@@ -90,10 +90,23 @@ class _MyAppState extends State<MyApp> {
         FallbackCupertinoLocalizationDelegate(),
       ],
       locale: _locale,
+      // Inside main.dart -> _MyAppState -> build -> MaterialApp.router:
       supportedLocales: const [
         Locale('de'),
         Locale('en'),
+        Locale('ko'),
+        Locale('it'),
+        Locale('fr'),
+        Locale('es'),
+        Locale('ru'),
+        Locale('pt'),
+        Locale('tr'),
+        Locale('ja'),
+        Locale('hi'),
+        Locale('ar'),
+        Locale('bn'),
       ],
+// ... rest of MaterialApp properties (theme, themeMode, routerConfig, etc.)
       theme: ThemeData(
         brightness: Brightness.light,
         useMaterial3: false,
