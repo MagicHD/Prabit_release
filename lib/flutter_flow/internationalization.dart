@@ -49,6 +49,14 @@ class FFLocalizations {
     String? itText = '', // Added Italian
     String? frText = '', // Added French
     String? esText = '', // Added Spanish
+    String? ruText = '',
+    String? ptText = '', // Added Italian
+    String? trText = '', // Added French
+    String? jaText = '', //
+    String? hiText = '', //
+    String? arText = '', //
+    String? bnText = '', //
+
   }) =>
       [deText, enText, koText, itText, frText, esText][languageIndex] ?? ''; // Added Italian, French, Spanish
 
