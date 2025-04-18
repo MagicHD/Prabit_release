@@ -5,8 +5,6 @@ export '/profile/profilescreen/profilescreen_widget.dart'
 export 'profile/calendar/calendar_widget.dart' show CalendarWidget;
 export '/nichtwichtig/statistiscpage/statistiscpage_widget.dart'
     show StatistiscpageWidget;
-export '/group/groupcreationscreen/groupcreationscreen_widget.dart'
-    show GroupcreationscreenWidget;
 export '/profile/settings/settings_widget.dart' show SettingsWidget;
 export '/habit/habit_selection_screen/habit_selection_screen_widget.dart'
     show HabitSelectionScreenWidget;

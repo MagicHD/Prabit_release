@@ -123,11 +123,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           path: StatistiscpageWidget.routePath,
           builder: (context, params) => StatistiscpageWidget(),
         ),
-        FFRoute(
-          name: GroupcreationscreenWidget.routeName,
-          path: GroupcreationscreenWidget.routePath,
-          builder: (context, params) => GroupcreationscreenWidget(),
-        ),
+
         FFRoute(
           name: SettingsWidget.routeName,
           path: SettingsWidget.routePath,
