@@ -623,7 +623,9 @@ class _ProfilescreenWidgetState extends State<ProfilescreenWidget> {
                       size: 24.0,
                     ),
                     onPressed: () async {
-                      context.pushNamed('Calendar'); // Use correct route name if different
+                      // --- FIX: Use correct routeName ---
+                      context.pushNamed(CalendarWidget.routeName);
+                      // --- End FIX ---
                     },
                   ),
                   FlutterFlowIconButton(
@@ -635,7 +637,9 @@ class _ProfilescreenWidgetState extends State<ProfilescreenWidget> {
                       size: 24.0,
                     ),
                     onPressed: () async {
-                      context.pushNamed('Settings'); // Use correct route name if different
+                      // --- FIX: Use correct routeName ---
+                      context.pushNamed(SettingsWidget.routeName);
+                      // --- End FIX ---
                     },
                   ),
                 ].divide(SizedBox(width: 8.0)),
