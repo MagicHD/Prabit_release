@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 
+import '../../profile/settings/Terms_of_service.screen.dart';
+import '../../profile/settings/privacy_policy_screen.dart';
 import '../auth_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -690,6 +692,7 @@ class _SignupScreenWidgetState extends State<SignupScreenWidget> {
                                                           fontFamily: 'Manrope', color: Colors.white // Ensure style consistency
                                                       ),
                                                     ),
+                                                    // Inside the RichText widget's TextSpan children list:
                                                     TextSpan(
                                                       text: FFLocalizations.of(context).getText(
                                                         'rbbty9tw' /* Terms of Service */,
@@ -698,11 +701,18 @@ class _SignupScreenWidgetState extends State<SignupScreenWidget> {
                                                         color: FlutterFlowTheme.of(context).buttonBackground, // Use theme color
                                                         // decoration: TextDecoration.underline, // Add underline if desired
                                                       ),
-                                                      recognizer:
-                                                      TapGestureRecognizer()..onTap = () {
-                                                        // TODO: Implement navigation to Terms of Service page or show a dialog
-                                                        print('Terms of Service tapped');
-                                                      },
+                                                      recognizer: TapGestureRecognizer()
+                                                        ..onTap = () {
+                                                          // --- MODIFIED ACTION ---
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(builder: (context) => TermsOfServiceScreen()),
+                                                          );
+                                                          // Alternatively, if using named routes with go_router:
+                                                          // context.pushNamed(TermsOfServiceScreen.routeName); // Ensure routeName is defined in TermsOfServiceScreen
+                                                          // --- END MODIFICATION ---
+                                                          // print('Terms of Service tapped'); // Original action (can be removed)
+                                                        },
                                                     ),
                                                     TextSpan(
                                                       text: FFLocalizations.of(context).getText(
@@ -712,6 +722,7 @@ class _SignupScreenWidgetState extends State<SignupScreenWidget> {
                                                           fontFamily: 'Manrope', color: Colors.white
                                                       ),
                                                     ),
+                                                    // Inside the RichText widget's TextSpan children list:
                                                     TextSpan(
                                                       text: FFLocalizations.of(context).getText(
                                                         'hqpvp9r0' /* Privacy Policy */,
@@ -720,10 +731,18 @@ class _SignupScreenWidgetState extends State<SignupScreenWidget> {
                                                         color: FlutterFlowTheme.of(context).buttonBackground, // Use theme color
                                                         // decoration: TextDecoration.underline,
                                                       ),
-                                                      recognizer: TapGestureRecognizer()..onTap = () {
-                                                        // TODO: Implement navigation to Privacy Policy page or show a dialog
-                                                        print('Privacy Policy tapped');
-                                                      },
+                                                      recognizer: TapGestureRecognizer()
+                                                        ..onTap = () {
+                                                          // --- MODIFIED ACTION ---
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(builder: (context) => PrivacyPolicyScreen()),
+                                                          );
+                                                          // Alternatively, if using named routes with go_router:
+                                                          // context.pushNamed(PrivacyPolicyScreen.routeName); // Ensure routeName is defined in PrivacyPolicyScreen
+                                                          // --- END MODIFICATION ---
+                                                          // print('Privacy Policy tapped'); // Original action (can be removed)
+                                                        },
                                                     )
                                                   ],
                                                   style: FlutterFlowTheme.of(context).labelSmall.override(
