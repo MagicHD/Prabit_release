@@ -4,11 +4,28 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import for Timestamp
+import 'package:cached_network_image/cached_network_image.dart'; // Optional for avatar
+
 import 'friend_message_model.dart';
 export 'friend_message_model.dart';
 
 class FriendMessageWidget extends StatefulWidget {
-  const FriendMessageWidget({super.key});
+  // --- ADDED PARAMETERS ---
+  final String? messageText;
+  final Timestamp? timestamp;
+  final String? senderName;
+  final String? senderImageUrl; // Optional sender image
+
+  const FriendMessageWidget({
+    super.key,
+    this.messageText,
+    this.timestamp,
+    this.senderName,
+    this.senderImageUrl,
+  });
+  // --- END ADDED PARAMETERS ---
 
   @override
   State<FriendMessageWidget> createState() => _FriendMessageWidgetState();
@@ -32,134 +49,135 @@ class _FriendMessageWidgetState extends State<FriendMessageWidget> {
   @override
   void dispose() {
     _model.maybeDispose();
-
     super.dispose();
+  }
+
+  // Helper to format timestamp
+  String _formatTimestamp(Timestamp? ts) {
+    if (ts == null) return '';
+    return DateFormat('HH:mm').format(ts.toDate());
+  }
+
+  // Helper for defensive text style (copy from GroupCreation2Widget or define here)
+  TextStyle _getTextStyle( BuildContext context, TextStyle baseStyle, String? fontFamilyName,
+      {Color? colorOverride, double? fontSizeOverride, FontWeight? fontWeightOverride, double? letterSpacingOverride}) {
+    TextStyle style = baseStyle;
+    if (colorOverride != null) style = style.copyWith(color: colorOverride);
+    if (fontSizeOverride != null) style = style.copyWith(fontSize: fontSizeOverride);
+    if (fontWeightOverride != null) style = style.copyWith(fontWeight: fontWeightOverride);
+    if (letterSpacingOverride != null) style = style.copyWith(letterSpacing: letterSpacingOverride);
+
+    if (fontFamilyName != null && GoogleFonts.asMap().containsKey(fontFamilyName)) {
+      return GoogleFonts.getFont(fontFamilyName, textStyle: style);
+    } else {
+      return style.copyWith(fontFamily: fontFamilyName);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    final bool hasSenderImage = widget.senderImageUrl != null && widget.senderImageUrl!.isNotEmpty;
+
+    // Apply defensive styling
+    final senderNameStyle = _getTextStyle(context, theme.bodyMedium, 'Manrope', colorOverride: Colors.white, fontSizeOverride: 14.0, fontWeightOverride: FontWeight.w600);
+    final messageTextStyle = _getTextStyle(context, theme.bodyMedium, 'Manrope', colorOverride: Colors.white, fontSizeOverride: 14.0, fontWeightOverride: FontWeight.w500);
+    final timeTextStyle = _getTextStyle(context, theme.labelSmall, 'Manrope', colorOverride: Color(0xFF9E9E9E), fontSizeOverride: 12.0, fontWeightOverride: FontWeight.w500);
+    final initialTextStyle = _getTextStyle(context, theme.bodyMedium, 'Manrope', colorOverride: Colors.white, fontSizeOverride: 14.0, fontWeightOverride: FontWeight.w600);
+
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
-      child: Column(
+      padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 4.0), // Reduced top padding
+      child: Row( // Use Row for avatar + message bubble
         mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align avatar top left
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.max,
+          // --- Sender Avatar ---
+          Container(
+            width: 36.0,
+            height: 36.0,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Color(0xFF2A2A2A), // Fallback color
+              shape: BoxShape.circle,
+              image: hasSenderImage
+                  ? DecorationImage(
+                fit: BoxFit.cover,
+                image: NetworkImage(widget.senderImageUrl!), // Use sender image URL
+              )
+                  : null,
+            ),
+            child: !hasSenderImage
+                ? Align(
+              alignment: AlignmentDirectional(0.0, 0.0),
+              child: Text( // Display sender initial if no image
+                widget.senderName?.isNotEmpty == true ? widget.senderName!.substring(0, 1).toUpperCase() : '?',
+                style: initialTextStyle,
+              ),
+            )
+                : null,
+          ),
+          // --- End Sender Avatar ---
+          SizedBox(width: 8.0), // Spacing between avatar and bubble
+          // --- Message Bubble ---
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 36.0,
-                height: 36.0,
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7), // Max width
                 decoration: BoxDecoration(
-                  color: Color(0xFF2A2A2A),
-                  shape: BoxShape.circle,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional(0.0, 0.0),
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      FFLocalizations.of(context).getText(
-                        '0zn8t2n0' /* E */,
-                      ),
-                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            fontFamily: 'Manrope',
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            letterSpacing: 0.0,
-                            fontWeight: FontWeight.w600,
-                            useGoogleFonts:
-                                GoogleFonts.asMap().containsKey('Manrope'),
-                          ),
-                    ),
+                  color: theme.secondary, // Different color for friend
+                  borderRadius: BorderRadius.only( // Standard bubble shape
+                    topLeft: Radius.circular(4.0), // Less rounded corner
+                    topRight: Radius.circular(16.0),
+                    bottomLeft: Radius.circular(16.0),
+                    bottomRight: Radius.circular(16.0),
                   ),
+                  border: Border.all( color: theme.primaryBordercolor,),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(8.0, 0.0, 8.0, 0.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Container(
-                        width: 250.0,
-                        decoration: BoxDecoration(
-                          color: FlutterFlowTheme.of(context).secondary,
-                          borderRadius: BorderRadius.circular(16.0),
-                          border: Border.all(
-                            color:
-                                FlutterFlowTheme.of(context).primaryBordercolor,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0), // Adjusted padding
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- MODIFIED: Display Sender Name ---
+                      if (widget.senderName != null) // Only show if name provided
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text(
+                            widget.senderName!,
+                            style: senderNameStyle,
                           ),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                FFLocalizations.of(context).getText(
-                                  'cy4vbq8r' /* Emma */,
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Manrope',
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.w600,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey('Manrope'),
-                                    ),
-                              ),
-                              Text(
-                                FFLocalizations.of(context).getText(
-                                  'gcs4n56m' /* That's a great goal! I'm aimin... */,
-                                ),
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Manrope',
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FontWeight.w500,
-                                      useGoogleFonts: GoogleFonts.asMap()
-                                          .containsKey('Manrope'),
-                                    ),
-                              ),
-                              Align(
-                                alignment: AlignmentDirectional(1.0, 0.0),
-                                child: Text(
-                                  FFLocalizations.of(context).getText(
-                                    'r21q9tz4' /* 20:32 */,
-                                  ),
-                                  style: FlutterFlowTheme.of(context)
-                                      .labelSmall
-                                      .override(
-                                        fontFamily: 'Manrope',
-                                        color: Color(0xFF9E9E9E),
-                                        fontSize: 12.0,
-                                        letterSpacing: 0.0,
-                                        fontWeight: FontWeight.w500,
-                                        useGoogleFonts: GoogleFonts.asMap()
-                                            .containsKey('Manrope'),
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      // --- END MODIFIED ---
+
+                      // --- MODIFIED: Display Message Text ---
+                      Text(
+                        widget.messageText ?? '',
+                        style: messageTextStyle,
                       ),
-                    ),
-                  ],
+                      // --- END MODIFIED ---
+
+                      // --- MODIFIED: Display Timestamp ---
+                      if (widget.timestamp != null) ...[
+                        SizedBox(height: 4.0),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Text(
+                            _formatTimestamp(widget.timestamp),
+                            style: timeTextStyle,
+                          ),
+                        ),
+                      ]
+                      // --- END MODIFIED ---
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
+          // --- End Message Bubble ---
         ],
       ),
     );

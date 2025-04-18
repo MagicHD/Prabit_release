@@ -4,11 +4,23 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import for Timestamp
+
 import 'currentuser_message_model.dart';
 export 'currentuser_message_model.dart';
 
 class CurrentuserMessageWidget extends StatefulWidget {
-  const CurrentuserMessageWidget({super.key});
+  // --- ADDED PARAMETERS ---
+  final String? messageText;
+  final Timestamp? timestamp;
+
+  const CurrentuserMessageWidget({
+    super.key,
+    this.messageText,
+    this.timestamp,
+  });
+  // --- END ADDED PARAMETERS ---
 
   @override
   State<CurrentuserMessageWidget> createState() =>
@@ -33,65 +45,82 @@ class _CurrentuserMessageWidgetState extends State<CurrentuserMessageWidget> {
   @override
   void dispose() {
     _model.maybeDispose();
-
     super.dispose();
   }
 
+  // Helper to format timestamp
+  String _formatTimestamp(Timestamp? ts) {
+    if (ts == null) return '';
+    // Format to HH:mm (e.g., 20:17)
+    return DateFormat('HH:mm').format(ts.toDate());
+  }
+
+  // Helper for defensive text style (copy from GroupCreation2Widget or define here)
+  TextStyle _getTextStyle( BuildContext context, TextStyle baseStyle, String? fontFamilyName,
+      {Color? colorOverride, double? fontSizeOverride, FontWeight? fontWeightOverride, double? letterSpacingOverride}) {
+    TextStyle style = baseStyle;
+    if (colorOverride != null) style = style.copyWith(color: colorOverride);
+    if (fontSizeOverride != null) style = style.copyWith(fontSize: fontSizeOverride);
+    if (fontWeightOverride != null) style = style.copyWith(fontWeight: fontWeightOverride);
+    if (letterSpacingOverride != null) style = style.copyWith(letterSpacing: letterSpacingOverride);
+
+    if (fontFamilyName != null && GoogleFonts.asMap().containsKey(fontFamilyName)) {
+      return GoogleFonts.getFont(fontFamilyName, textStyle: style);
+    } else {
+      return style.copyWith(fontFamily: fontFamilyName);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    // Apply defensive styling
+    final messageTextStyle = _getTextStyle(context, theme.bodyMedium, 'Manrope', colorOverride: Colors.white, fontSizeOverride: 14.0, fontWeightOverride: FontWeight.w500);
+    final timeTextStyle = _getTextStyle(context, theme.labelSmall, 'Manrope', colorOverride: Color(0xFF9E9E9E), fontSizeOverride: 12.0, fontWeightOverride: FontWeight.w500);
+
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
+      padding: EdgeInsetsDirectional.fromSTEB(0.0, 4.0, 0.0, 4.0), // Reduced top padding
       child: Column(
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min, // Use min to wrap content
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Padding(
-            padding: EdgeInsets.all(12.0),
-            child: Container(
-              width: 250.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).buttonBackground,
-                borderRadius: BorderRadius.circular(16.0),
+          Container(
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75), // Max width for bubble
+            decoration: BoxDecoration(
+              color: theme.buttonBackground, // Use theme color
+              borderRadius: BorderRadius.only( // Standard bubble shape
+                topLeft: Radius.circular(16.0),
+                topRight: Radius.circular(16.0),
+                bottomLeft: Radius.circular(16.0),
+                bottomRight: Radius.circular(4.0), // Less rounded corner
               ),
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      FFLocalizations.of(context).getText(
-                        'ej93pxu8' /* I'm about to start my morning ... */,
-                      ),
-                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            fontFamily: 'Manrope',
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            letterSpacing: 0.0,
-                            fontWeight: FontWeight.w500,
-                            useGoogleFonts:
-                                GoogleFonts.asMap().containsKey('Manrope'),
-                          ),
-                    ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0), // Adjusted padding
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start, // Text starts left within bubble
+                children: [
+                  // --- MODIFIED: Display passed message text ---
+                  Text(
+                    widget.messageText ?? '', // Display message text or empty string
+                    style: messageTextStyle,
+                  ),
+                  // --- END MODIFIED ---
+                  if (widget.timestamp != null) ...[ // Conditionally display timestamp
+                    SizedBox(height: 4.0),
                     Align(
-                      alignment: AlignmentDirectional(1.0, 0.0),
+                      alignment: AlignmentDirectional.centerEnd, // Align time to the right
+                      // --- MODIFIED: Display formatted timestamp ---
                       child: Text(
-                        FFLocalizations.of(context).getText(
-                          'fpc7t1br' /* 20:17 */,
-                        ),
-                        style: FlutterFlowTheme.of(context).labelSmall.override(
-                              fontFamily: 'Manrope',
-                              color: Color(0xFF9E9E9E),
-                              fontSize: 12.0,
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.w500,
-                              useGoogleFonts:
-                                  GoogleFonts.asMap().containsKey('Manrope'),
-                            ),
+                        _formatTimestamp(widget.timestamp), // Display formatted time
+                        style: timeTextStyle,
                       ),
+                      // --- END MODIFIED ---
                     ),
-                  ],
-                ),
+                  ]
+                ],
               ),
             ),
           ),

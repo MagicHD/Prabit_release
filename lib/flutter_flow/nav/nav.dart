@@ -225,11 +225,42 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                   page: GroupWidget(),
                 ),
         ),
+        // Find this route definition in your nav.dart:
         FFRoute(
-          name: GroupChatWidget.routeName,
-          path: GroupChatWidget.routePath,
-          builder: (context, params) => GroupChatWidget(),
-        ),
+          name: GroupChatWidget.routeName, // 'group_chat'
+          path: GroupChatWidget.routePath, // '/groupChat'
+
+          // --- MODIFY THE builder FUNCTION BELOW ---
+          builder: (context, params) { // params is FFParameters
+            // Access GoRouterState via params.state
+            final GoRouterState state = params.state;
+            // Extract parameters from queryParameters map
+            final String groupId = state.uri.queryParameters['groupId'] ?? '';
+            final String groupName = state.uri.queryParameters['groupName'] ?? 'Chat'; // Default name
+            final String? groupImageUrl = state.uri.queryParameters['groupImageUrl']; // Image URL can be null
+
+            // Optional: Add a check for missing essential parameters like groupId
+            if (groupId.isEmpty) {
+              // Log an error or return an error widget/navigate back
+              print('Error navigating to GroupChat: Missing groupId parameter.');
+              // Example: Return a simple error view or navigate back
+              return Scaffold(
+                  appBar: AppBar(title: Text("Error")),
+                  body: Center(child: Text("Could not load chat: Missing Group ID."))
+              );
+              // Alternatively: context.pop(); return Container(); // Pop back immediately
+            }
+
+            // Instantiate GroupChatWidget with the extracted parameters
+            return GroupChatWidget(
+              groupId: groupId,
+              groupName: groupName,
+              groupImageUrl: groupImageUrl,
+            );
+          },
+          // --- END OF MODIFICATION ---
+
+        ), // End of FFRoute for GroupChatWidget
         FFRoute(
           name: GroupDetailsWidget.routeName,
           path: GroupDetailsWidget.routePath,

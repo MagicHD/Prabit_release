@@ -109,126 +109,94 @@ class _GroupWidgetState extends State<GroupWidget> {
       }
     });
   }
-
   // --- Widget Builder for Default View (My Groups & Discover) ---
   Widget _buildDefaultGroupLists() {
-    // This assumes your "My Groups" and "Discover Groups" Columns
-    // are inside the SingleChildScrollView you just replaced.
-    // You need to reconstruct this part, likely using a ListView.
-    return ListView( // Use ListView for scrolling
-      padding: EdgeInsets.zero, // Reset padding if parent Padding handles it
+    final theme = FlutterFlowTheme.of(context);
+    return ListView(
+      padding: EdgeInsets.zero,
       children: [
         // --- My Groups Section ---
-        Text(
-          FFLocalizations.of(context).getText('79hv9d87' /* My Groups */),
-          style: FlutterFlowTheme.of(context).titleLarge,
-        ),
+        Text('My Groups', style: theme.titleLarge),
         SizedBox(height: 12.0),
-        // --- Paste your dynamic "My Groups" logic here ---
         _model.isLoadingMyGroups
-            ? Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          child: Center(child: CircularProgressIndicator()),
-        )
+            ? Padding( padding: const EdgeInsets.symmetric(vertical: 20.0), child: Center(child: CircularProgressIndicator()),)
             : _model.userGroups.isEmpty
-            ? Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          child: Center(
-            child: Text(
-              'You haven\'t joined any groups yet.',
-              style: FlutterFlowTheme.of(context).bodyMedium,
-            ),
-          ),
-        )
+            ? Padding( padding: const EdgeInsets.symmetric(vertical: 20.0), child: Center( child: Text('You haven\'t joined any groups yet.', style: theme.bodyMedium,),),)
             : Column(
           mainAxisSize: MainAxisSize.min,
+          // ** CORRECTED NAVIGATION PLACEMENT **
           children: _model.userGroups.map((group) {
-            // Use the same widget as before (e.g., ExistingGroupWidget or _buildGroupTile)
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
-              // Replace with your actual group tile widget creation
-              child: ExistingGroupWidget( // <-- Modifying this block
-                groupname: group['groupName'],
-                membercount: group['memberCount'],
-                groupImageUrl: group['groupImageUrl'], // <-- ADD THIS LINE
-                // icon: FaIcon(FontAwesomeIcons.users), // <-- REMOVE THIS LINE
-                // Pass groupId etc. if needed
+              child: GestureDetector( // <-- Wrap with GestureDetector
+                onTap: () { // <-- Implement onTap
+                  context.pushNamed( // <-- Navigation inside onTap
+                    GroupChatWidget.routeName,
+                    queryParameters: {
+                      'groupId': group['groupId'], // Use group map
+                      'groupName': group['groupName'],
+                      'groupImageUrl': group['groupImageUrl'],
+                    }.withoutNulls,
+                  );
+                },
+                child: ExistingGroupWidget( // The card
+                  groupname: group['groupName'],
+                  membercount: group['memberCount'],
+                  groupImageUrl: group['groupImageUrl'], // Pass image URL
+                ),
               ),
             );
           }).toList(),
         ),
-        // --- End of My Groups Dynamic Logic ---
         SizedBox(height: 24.0),
 
-        // --- Discover Groups Section (Keep your existing hardcoded Discover section for now) ---
-        Text(
-          FFLocalizations.of(context).getText('82rc6hzr' /* Discover Groups */),
-          style: FlutterFlowTheme.of(context).titleLarge,
-        ),
+        // --- Discover Groups Section ---
+        // Keep this section as it was unless you want to make it dynamic
+        Text('Discover Groups', style: theme.titleLarge,),
         SizedBox(height: 12.0),
-        // --- Keep your hardcoded Discover Group Widgets here for now ---
-        // Example:
-        // wrapWithModel(
-        //   model: _model.discoverGroupModel1,
-        //   updateCallback: () => safeSetState(() {}),
-        //   child: DiscoverGroupWidget(),
-        // ),
-        // ... other discover widgets ...
-        // --- End of Discover Groups Section ---
+        // Add your DiscoverGroupWidget instances here (or fetch dynamically)
+        // Example: DiscoverGroupWidget(), SizedBox(height: 12), DiscoverGroupWidget(),
 
-        // Add some bottom padding inside the scroll view
-        SizedBox(height: 80), // To prevent FAB overlap
+        SizedBox(height: 80), // Padding for FAB
       ],
     );
   }
 
   // --- Widget Builder for Search Results View ---
   Widget _buildSearchResultsList() {
-    if (_model.isLoadingSearchResults) {
-      return Center(child: CircularProgressIndicator());
-    }
+    final theme = FlutterFlowTheme.of(context);
+    if (_model.isLoadingSearchResults) { return Center(child: CircularProgressIndicator()); }
+    if (_model.searchResults.isEmpty && _model.searchQuery.trim().isNotEmpty) { return Center( child: Text('No groups found matching "${_model.searchQuery}"', textAlign: TextAlign.center, style: theme.bodyMedium,),); }
+    // Don't show anything if search is empty and not loading
+    if (_model.searchQuery.trim().isEmpty) { return Container(); }
 
-    // Check if the search query is empty AFTER loading (should not happen with current logic, but safe check)
-    if (_model.searchQuery.trim().isEmpty){
-      return Center(
-        child: Text(
-          'Enter a search term to find groups.',
-          style: FlutterFlowTheme.of(context).bodyMedium,
-        ),
-      );
-    }
-
-    // Check if results are empty for the given query
-    if (_model.searchResults.isEmpty) {
-      return Center(
-        child: Text(
-          'No groups found matching "${_model.searchQuery}"',
-          textAlign: TextAlign.center, // Center text
-          style: FlutterFlowTheme.of(context).bodyMedium,
-        ),
-      );
-    }
-
-    // Build the list using search results
     return ListView.separated(
-      padding: EdgeInsets.zero, // List takes full space in Expanded
+      padding: EdgeInsets.zero,
       itemCount: _model.searchResults.length,
       itemBuilder: (context, index) {
         final group = _model.searchResults[index];
-        // --- Use the SAME widget you use for "My Groups" items ---
-        // Option A: ExistingGroupWidget
-        return ExistingGroupWidget( // <-- Modifying this block
-          groupname: group['groupName'],
-          membercount: group['memberCount'],
-          groupImageUrl: group['groupImageUrl'], // <-- ADD THIS LINE
-          // icon: FaIcon(FontAwesomeIcons.search), // <-- REMOVE THIS LINE (or any other icon passed here)
-          // Pass groupId etc. if needed
-          // Add logic to show a "Join" button if !group['isMember']
+        // ** CORRECTED NAVIGATION PLACEMENT **
+        return GestureDetector( // <-- Wrap with GestureDetector
+          onTap: () { // <-- Implement onTap
+            context.pushNamed( // <-- Navigation inside onTap
+              GroupChatWidget.routeName,
+              queryParameters: {
+                'groupId': group['groupId'], // Use group map
+                'groupName': group['groupName'],
+                'groupImageUrl': group['groupImageUrl'],
+              }.withoutNulls,
+            );
+          },
+          child: ExistingGroupWidget( // The card
+            groupname: group['groupName'],
+            membercount: group['memberCount'],
+            groupImageUrl: group['groupImageUrl'], // Pass image URL
+            // TODO: Add logic here or inside ExistingGroupWidget to show a "Join" button
+            // if group['isMember'] is false and group['groupType'] allows joining.
+          ),
         );
-        // Option B: Use a custom tile builder like _buildGroupTile from previous examples
-        // return _buildGroupTile(group); // Ensure _buildGroupTile handles join buttons
       },
-      separatorBuilder: (context, index) => SizedBox(height: 12.0), // Spacing
+      separatorBuilder: (context, index) => SizedBox(height: 12.0),
     );
   }
 
@@ -388,16 +356,6 @@ class _GroupWidgetState extends State<GroupWidget> {
     }
   }
 
-  void _navigateToGroupChat(String groupId, String groupName) {
-    // Use FlutterFlow's navigation if preferred, or standard Navigator
-    context.pushNamed(
-      GroupChatWidget.routeName, // Make sure GroupChatWidget has a routeName defined
-      queryParameters: {
-        'groupId': groupId, // Pass parameters as needed by GroupChatWidget
-        'groupName': groupName,
-      }.withoutNulls,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
