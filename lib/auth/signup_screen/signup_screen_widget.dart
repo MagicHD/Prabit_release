@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import '../../profile/settings/Terms_of_service.screen.dart';
 import '../../profile/settings/privacy_policy_screen.dart';
 import '../auth_service.dart';
+import '../forgot_password_screen/setup_profile_screen/setup_profile_screen.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -165,23 +166,16 @@ class _SignupScreenWidgetState extends State<SignupScreenWidget> {
 
     setState(() => _isLoading = true);
 
-
-    // Pass context for potential error messages from AuthService
     User? user = await _authService.signUp(email, password, username, context);
 
-
     if (user != null) {
-      // Sign up successful (Firestore doc created and verification email sent in AuthService)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account created successfully! Please check your email ($email) to verify your account.')),
-      );
-      // Navigate to Login screen after successful signup
-      context.goNamed(LoginScreenWidget.routeName);
-      // Or clear stack and go to login:
-      // Navigator.of(context).pushNamedAndRemoveUntil(LoginScreenWidget.routeName, (Route<dynamic> route) => false);
-
+      // --- MODIFIED NAVIGATION ---
+      context
+          .pushNamed(SetupProfileScreenWidget.routeName);
+      // Or use goNamed if you prefer its behavior (often replaces stack too)
+      // context.goNamed(SetupProfileScreenWidget.routeName);
+      // --- END MODIFICATION ---
     }
-    // Error handling is inside AuthService
 
     if (mounted) {
       setState(() => _isLoading = false);

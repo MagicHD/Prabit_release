@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth/forgot_password_screen/setup_profile_screen/setup_profile_screen.dart';
 import '../../habit/congrats/congrats_screen_widget.dart';
 import '../../habit/photo/habit_photo_screen_widget.dart';
 import '../../habit/review/habit_review_screen_widget.dart';
@@ -224,6 +225,13 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                   initialPage: 'group',
                   page: GroupWidget(),
                 ),
+        ),
+        // Inside your GoRouter configuration in nav.dart
+        FFRoute(
+          name: SetupProfileScreenWidget.routeName,
+          path: SetupProfileScreenWidget.routePath,
+          builder: (context, params) => SetupProfileScreenWidget(),
+          // Add requireAuth: true if needed, though the redirect logic might handle this
         ),
         // Find this route definition in your nav.dart:
         FFRoute(
