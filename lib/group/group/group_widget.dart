@@ -147,10 +147,11 @@ class _GroupWidgetState extends State<GroupWidget> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               // Replace with your actual group tile widget creation
-              child: ExistingGroupWidget(
+              child: ExistingGroupWidget( // <-- Modifying this block
                 groupname: group['groupName'],
                 membercount: group['memberCount'],
-                icon: FaIcon(FontAwesomeIcons.users), // Placeholder
+                groupImageUrl: group['groupImageUrl'], // <-- ADD THIS LINE
+                // icon: FaIcon(FontAwesomeIcons.users), // <-- REMOVE THIS LINE
                 // Pass groupId etc. if needed
               ),
             );
@@ -216,10 +217,11 @@ class _GroupWidgetState extends State<GroupWidget> {
         final group = _model.searchResults[index];
         // --- Use the SAME widget you use for "My Groups" items ---
         // Option A: ExistingGroupWidget
-        return ExistingGroupWidget(
+        return ExistingGroupWidget( // <-- Modifying this block
           groupname: group['groupName'],
           membercount: group['memberCount'],
-          icon: FaIcon(FontAwesomeIcons.search), // Example search icon
+          groupImageUrl: group['groupImageUrl'], // <-- ADD THIS LINE
+          // icon: FaIcon(FontAwesomeIcons.search), // <-- REMOVE THIS LINE (or any other icon passed here)
           // Pass groupId etc. if needed
           // Add logic to show a "Join" button if !group['isMember']
         );
